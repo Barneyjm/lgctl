@@ -1,5 +1,11 @@
 # lgctl - LangGraph Memory Management CLI
 
+[![PyPI version](https://badge.fury.io/py/lgctl.svg)](https://badge.fury.io/py/lgctl)
+[![Python](https://img.shields.io/pypi/pyversions/lgctl.svg)](https://pypi.org/project/lgctl/)
+[![CI](https://github.com/Barneyjm/lgctl/actions/workflows/ci.yml/badge.svg)](https://github.com/Barneyjm/lgctl/actions/workflows/ci.yml)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Unix-style command-line tool for managing LangGraph memory stores, threads, runs, assistants, and crons.
 
 ## Features

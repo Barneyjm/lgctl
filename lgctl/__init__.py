@@ -7,8 +7,8 @@ threads, runs, assistants, and crons.
 Designed for both local development and remote LangSmith deployments.
 """
 
-__version__ = "0.1.0"
-__author__ = "searchbot"
+__version__ = "0.1.1"
+__author__ = "James Barney"
 
 from .client import LGCtlClient, get_client
 from .formatters import Formatter, JsonFormatter, RawFormatter, TableFormatter
