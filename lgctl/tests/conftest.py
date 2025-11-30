@@ -2,23 +2,21 @@
 Pytest configuration and shared fixtures for lgctl tests.
 """
 
-import pytest
-import pytest_asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Any, Dict, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from lgctl.client import LGCtlClient
-from lgctl.formatters import TableFormatter, JsonFormatter, RawFormatter
+import pytest
 
+from lgctl.formatters import JsonFormatter, RawFormatter, TableFormatter
 
 # Configure pytest-asyncio
-pytest_plugins = ('pytest_asyncio',)
+pytest_plugins = ("pytest_asyncio",)
 
 
 def pytest_collection_modifyitems(items):
     """Add asyncio marker to all async test functions."""
     import inspect
+
     for item in items:
         if inspect.iscoroutinefunction(item.obj):
             item.add_marker(pytest.mark.asyncio)
@@ -135,6 +133,7 @@ MOCK_CRONS = [
 # Mock Store Client
 # =============================================================================
 
+
 class MockStoreClient:
     """Mock LangGraph Store client."""
 
@@ -143,18 +142,16 @@ class MockStoreClient:
         self._namespaces = namespaces or MOCK_NAMESPACES.copy()
 
     async def list_namespaces(
-        self,
-        prefix: Optional[List[str]] = None,
-        max_depth: int = 2,
-        limit: int = 100
+        self, prefix: Optional[List[str]] = None, max_depth: int = 2, limit: int = 100
     ) -> Dict:
         """Mock list namespaces."""
         prefix = prefix or []
         prefix_tuple = tuple(prefix)
 
         filtered = [
-            ns for ns in self._namespaces
-            if ns[:len(prefix_tuple)] == prefix_tuple or not prefix_tuple
+            ns
+            for ns in self._namespaces
+            if ns[: len(prefix_tuple)] == prefix_tuple or not prefix_tuple
         ]
         return {"namespaces": filtered[:limit]}
 
@@ -164,12 +161,16 @@ class MockStoreClient:
         query: str = "",
         filter: Optional[Dict] = None,
         limit: int = 100,
-        offset: int = 0
+        offset: int = 0,
     ) -> Dict:
         """Mock search items."""
         filtered = []
         for item in self._items:
-            item_ns = tuple(item["namespace"]) if isinstance(item["namespace"], list) else item["namespace"]
+            item_ns = (
+                tuple(item["namespace"])
+                if isinstance(item["namespace"], list)
+                else item["namespace"]
+            )
             if item_ns == namespace or not namespace:
                 # Simple query matching
                 if query:
@@ -181,55 +182,53 @@ class MockStoreClient:
                 else:
                     filtered.append(item)
 
-        return {"items": filtered[offset:offset + limit]}
+        return {"items": filtered[offset : offset + limit]}
 
     async def get_item(
-        self,
-        namespace: tuple,
-        key: str,
-        refresh_ttl: bool = False
+        self, namespace: tuple, key: str, refresh_ttl: bool = False
     ) -> Optional[Dict]:
         """Mock get item."""
         for item in self._items:
-            item_ns = tuple(item["namespace"]) if isinstance(item["namespace"], list) else item["namespace"]
+            item_ns = (
+                tuple(item["namespace"])
+                if isinstance(item["namespace"], list)
+                else item["namespace"]
+            )
             if item_ns == namespace and item["key"] == key:
                 return item
         return None
 
     async def put_item(
-        self,
-        namespace: tuple,
-        key: str,
-        value: Any,
-        index: Optional[List[str]] = None
+        self, namespace: tuple, key: str, value: Any, index: Optional[List[str]] = None
     ) -> None:
         """Mock put item."""
         # Remove existing item if present
         self._items = [
-            i for i in self._items
-            if not (tuple(i["namespace"]) == namespace and i["key"] == key)
+            i for i in self._items if not (tuple(i["namespace"]) == namespace and i["key"] == key)
         ]
         # Add new item
         now = datetime.now().isoformat()
-        self._items.append({
-            "namespace": namespace,
-            "key": key,
-            "value": value,
-            "created_at": now,
-            "updated_at": now,
-        })
+        self._items.append(
+            {
+                "namespace": namespace,
+                "key": key,
+                "value": value,
+                "created_at": now,
+                "updated_at": now,
+            }
+        )
 
     async def delete_item(self, namespace: tuple, key: str) -> None:
         """Mock delete item."""
         self._items = [
-            i for i in self._items
-            if not (tuple(i["namespace"]) == namespace and i["key"] == key)
+            i for i in self._items if not (tuple(i["namespace"]) == namespace and i["key"] == key)
         ]
 
 
 # =============================================================================
 # Mock Threads Client
 # =============================================================================
+
 
 class MockThreadsClient:
     """Mock LangGraph Threads client."""
@@ -242,7 +241,7 @@ class MockThreadsClient:
         limit: int = 20,
         offset: int = 0,
         metadata: Optional[Dict] = None,
-        status: Optional[str] = None
+        status: Optional[str] = None,
     ) -> List[Dict]:
         """Mock search threads."""
         filtered = self._threads
@@ -250,10 +249,11 @@ class MockThreadsClient:
             filtered = [t for t in filtered if t.get("status") == status]
         if metadata:
             filtered = [
-                t for t in filtered
+                t
+                for t in filtered
                 if all(t.get("metadata", {}).get(k) == v for k, v in metadata.items())
             ]
-        return filtered[offset:offset + limit]
+        return filtered[offset : offset + limit]
 
     async def get(self, thread_id: str) -> Optional[Dict]:
         """Mock get thread."""
@@ -266,7 +266,7 @@ class MockThreadsClient:
         self,
         thread_id: Optional[str] = None,
         metadata: Optional[Dict] = None,
-        if_exists: str = "raise"
+        if_exists: str = "raise",
     ) -> Dict:
         """Mock create thread."""
         new_thread = {
@@ -285,10 +285,7 @@ class MockThreadsClient:
         self._threads = [t for t in self._threads if t["thread_id"] != thread_id]
 
     async def get_state(
-        self,
-        thread_id: str,
-        checkpoint_id: Optional[str] = None,
-        subgraphs: bool = False
+        self, thread_id: str, checkpoint_id: Optional[str] = None, subgraphs: bool = False
     ) -> Dict:
         """Mock get thread state."""
         for thread in self._threads:
@@ -307,7 +304,7 @@ class MockThreadsClient:
         thread_id: str,
         values: Dict[str, Any],
         as_node: Optional[str] = None,
-        checkpoint_id: Optional[str] = None
+        checkpoint_id: Optional[str] = None,
     ) -> Dict:
         """Mock update thread state."""
         for thread in self._threads:
@@ -322,23 +319,19 @@ class MockThreadsClient:
         thread_id: str,
         limit: int = 10,
         before: Optional[str] = None,
-        checkpoint_id: Optional[str] = None
+        checkpoint_id: Optional[str] = None,
     ) -> List[Dict]:
         """Mock get thread history."""
         return [
             {
                 "checkpoint": {"checkpoint_id": f"cp-{i:03d}", "thread_id": thread_id},
-                "created_at": f"2024-01-{15-i:02d}T12:00:00Z",
+                "created_at": f"2024-01-{15 - i:02d}T12:00:00Z",
                 "next": [],
             }
             for i in range(min(limit, 3))
         ]
 
-    async def update(
-        self,
-        thread_id: str,
-        metadata: Optional[Dict] = None
-    ) -> Dict:
+    async def update(self, thread_id: str, metadata: Optional[Dict] = None) -> Dict:
         """Mock update thread."""
         for thread in self._threads:
             if thread["thread_id"] == thread_id:
@@ -353,6 +346,7 @@ class MockThreadsClient:
 # Mock Runs Client
 # =============================================================================
 
+
 class MockRunsClient:
     """Mock LangGraph Runs client."""
 
@@ -360,17 +354,13 @@ class MockRunsClient:
         self._runs = runs or MOCK_RUNS.copy()
 
     async def list(
-        self,
-        thread_id: str,
-        limit: int = 20,
-        offset: int = 0,
-        status: Optional[str] = None
+        self, thread_id: str, limit: int = 20, offset: int = 0, status: Optional[str] = None
     ) -> List[Dict]:
         """Mock list runs."""
         filtered = [r for r in self._runs if r["thread_id"] == thread_id]
         if status:
             filtered = [r for r in filtered if r.get("status") == status]
-        return filtered[offset:offset + limit]
+        return filtered[offset : offset + limit]
 
     async def get(self, thread_id: str, run_id: str) -> Optional[Dict]:
         """Mock get run."""
@@ -388,7 +378,7 @@ class MockRunsClient:
         config: Optional[Dict] = None,
         multitask_strategy: str = "reject",
         interrupt_before: Optional[List[str]] = None,
-        interrupt_after: Optional[List[str]] = None
+        interrupt_after: Optional[List[str]] = None,
     ) -> Dict:
         """Mock create run."""
         new_run = {
@@ -411,7 +401,7 @@ class MockRunsClient:
         input: Optional[Dict] = None,
         config: Optional[Dict] = None,
         multitask_strategy: str = "reject",
-        raise_on_error: bool = True
+        raise_on_error: bool = True,
     ) -> Dict:
         """Mock wait for run."""
         return {"status": "success", "result": {"output": "completed"}}
@@ -437,6 +427,7 @@ class MockRunsClient:
 # Mock Assistants Client
 # =============================================================================
 
+
 class MockAssistantsClient:
     """Mock LangGraph Assistants client."""
 
@@ -448,13 +439,13 @@ class MockAssistantsClient:
         graph_id: Optional[str] = None,
         metadata: Optional[Dict] = None,
         limit: int = 20,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[Dict]:
         """Mock search assistants."""
         filtered = self._assistants
         if graph_id:
             filtered = [a for a in filtered if a.get("graph_id") == graph_id]
-        return filtered[offset:offset + limit]
+        return filtered[offset : offset + limit]
 
     async def get(self, assistant_id: str) -> Optional[Dict]:
         """Mock get assistant."""
@@ -469,7 +460,7 @@ class MockAssistantsClient:
         name: Optional[str] = None,
         config: Optional[Dict] = None,
         metadata: Optional[Dict] = None,
-        if_exists: str = "raise"
+        if_exists: str = "raise",
     ) -> Dict:
         """Mock create assistant."""
         new_assistant = {
@@ -503,7 +494,7 @@ class MockAssistantsClient:
         graph_id: Optional[str] = None,
         name: Optional[str] = None,
         config: Optional[Dict] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
     ) -> Dict:
         """Mock update assistant."""
         for assistant in self._assistants:
@@ -520,12 +511,7 @@ class MockAssistantsClient:
                 return assistant
         raise Exception("Assistant not found")
 
-    async def get_versions(
-        self,
-        assistant_id: str,
-        limit: int = 10,
-        offset: int = 0
-    ) -> List[Dict]:
+    async def get_versions(self, assistant_id: str, limit: int = 10, offset: int = 0) -> List[Dict]:
         """Mock get versions."""
         return [
             {"version": i, "assistant_id": assistant_id, "created_at": f"2024-01-{i:02d}T00:00:00Z"}
@@ -536,6 +522,7 @@ class MockAssistantsClient:
 # =============================================================================
 # Mock Crons Client
 # =============================================================================
+
 
 class MockCronsClient:
     """Mock LangGraph Crons client."""
@@ -548,7 +535,7 @@ class MockCronsClient:
         assistant_id: Optional[str] = None,
         thread_id: Optional[str] = None,
         limit: int = 20,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[Dict]:
         """Mock search crons."""
         filtered = self._crons
@@ -556,7 +543,7 @@ class MockCronsClient:
             filtered = [c for c in filtered if c.get("assistant_id") == assistant_id]
         if thread_id:
             filtered = [c for c in filtered if c.get("thread_id") == thread_id]
-        return filtered[offset:offset + limit]
+        return filtered[offset : offset + limit]
 
     async def get(self, cron_id: str) -> Optional[Dict]:
         """Mock get cron."""
@@ -571,7 +558,7 @@ class MockCronsClient:
         schedule: str,
         thread_id: Optional[str] = None,
         input: Optional[Dict] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
     ) -> Dict:
         """Mock create cron."""
         new_cron = {
@@ -599,7 +586,7 @@ class MockCronsClient:
         schedule: Optional[str] = None,
         input: Optional[Dict] = None,
         metadata: Optional[Dict] = None,
-        enabled: Optional[bool] = None
+        enabled: Optional[bool] = None,
     ) -> Dict:
         """Mock update cron."""
         for cron in self._crons:
@@ -621,14 +608,11 @@ class MockCronsClient:
 # Mock LGCtlClient
 # =============================================================================
 
+
 class MockLGCtlClient:
     """Mock LGCtlClient with all sub-clients."""
 
-    def __init__(
-        self,
-        url: str = "http://localhost:8123",
-        api_key: Optional[str] = None
-    ):
+    def __init__(self, url: str = "http://localhost:8123", api_key: Optional[str] = None):
         self.url = url
         self.api_key = api_key
         self.timeout = 30.0
@@ -670,6 +654,7 @@ class MockLGCtlClient:
 # =============================================================================
 # Pytest Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def mock_client():

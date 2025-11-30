@@ -5,7 +5,6 @@ Tests for lgctl commands/threads module.
 import pytest
 
 from lgctl.commands.threads import ThreadCommands
-from lgctl.formatters import TableFormatter
 
 
 class TestThreadCommands:
@@ -101,7 +100,7 @@ class TestThreadCommands:
     async def test_rm_thread(self, thread_commands):
         """Test deleting a thread."""
         # Create a thread first
-        created = await thread_commands.create(thread_id="thread-to-delete")
+        await thread_commands.create(thread_id="thread-to-delete")
 
         # Delete it
         result = await thread_commands.rm("thread-to-delete")
@@ -149,9 +148,7 @@ class TestThreadCommands:
     async def test_update_state_with_as_node(self, thread_commands):
         """Test updating thread state with as_node."""
         result = await thread_commands.update_state(
-            "thread-001",
-            {"value": "test"},
-            as_node="agent"
+            "thread-001", {"value": "test"}, as_node="agent"
         )
         assert result["status"] == "ok"
 
@@ -159,9 +156,7 @@ class TestThreadCommands:
     async def test_update_state_with_checkpoint(self, thread_commands):
         """Test updating thread state with checkpoint."""
         result = await thread_commands.update_state(
-            "thread-001",
-            {"value": "test"},
-            checkpoint_id="cp-001"
+            "thread-001", {"value": "test"}, checkpoint_id="cp-001"
         )
         assert result["status"] == "ok"
 
@@ -183,19 +178,13 @@ class TestThreadCommands:
     @pytest.mark.asyncio
     async def test_history_with_before(self, thread_commands):
         """Test getting thread history with before filter."""
-        result = await thread_commands.history(
-            "thread-001",
-            before="2024-01-15T00:00:00Z"
-        )
+        result = await thread_commands.history("thread-001", before="2024-01-15T00:00:00Z")
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
     async def test_history_with_checkpoint(self, thread_commands):
         """Test getting thread history starting from checkpoint."""
-        result = await thread_commands.history(
-            "thread-001",
-            checkpoint_id="cp-001"
-        )
+        result = await thread_commands.history("thread-001", checkpoint_id="cp-001")
         assert isinstance(result, list)
 
     @pytest.mark.asyncio

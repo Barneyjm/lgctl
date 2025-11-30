@@ -13,24 +13,22 @@ Usage:
     # Configure in Claude Desktop or other MCP clients
 """
 
-import asyncio
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
-from .client import get_client, LGCtlClient
+from .client import LGCtlClient, get_client
 from .commands import (
-    StoreCommands,
-    ThreadCommands,
-    RunCommands,
     AssistantCommands,
     MemoryOps,
+    RunCommands,
+    StoreCommands,
+    ThreadCommands,
 )
-from .commands.store import parse_namespace, format_namespace
 from .formatters import JsonFormatter
 
 # Configure logging to stderr (NEVER use print with MCP stdio transport)
@@ -71,12 +69,9 @@ def get_lgctl_client() -> LGCtlClient:
 # Store Tools
 # =============================================================================
 
+
 @mcp.tool()
-async def store_list_namespaces(
-    prefix: str = "",
-    max_depth: int = 3,
-    limit: int = 50
-) -> str:
+async def store_list_namespaces(prefix: str = "", max_depth: int = 3, limit: int = 50) -> str:
     """List namespaces in the LangGraph memory store.
 
     Namespaces organize memories hierarchically (like directories).
@@ -98,10 +93,7 @@ async def store_list_namespaces(
 
 
 @mcp.tool()
-async def store_list_items(
-    namespace: str,
-    limit: int = 20
-) -> str:
+async def store_list_items(namespace: str, limit: int = 20) -> str:
     """List items stored in a specific namespace.
 
     Args:
@@ -118,10 +110,7 @@ async def store_list_items(
 
 
 @mcp.tool()
-async def store_get(
-    namespace: str,
-    key: str
-) -> str:
+async def store_get(namespace: str, key: str) -> str:
     """Get a specific item from the store by namespace and key.
 
     Args:
@@ -140,12 +129,7 @@ async def store_get(
 
 
 @mcp.tool()
-async def store_put(
-    namespace: str,
-    key: str,
-    value: str,
-    is_json: bool = False
-) -> str:
+async def store_put(namespace: str, key: str, value: str, is_json: bool = False) -> str:
     """Store an item in the memory store.
 
     Args:
@@ -173,10 +157,7 @@ async def store_put(
 
 
 @mcp.tool()
-async def store_delete(
-    namespace: str,
-    key: str
-) -> str:
+async def store_delete(namespace: str, key: str) -> str:
     """Delete an item from the store.
 
     Args:
@@ -193,11 +174,7 @@ async def store_delete(
 
 
 @mcp.tool()
-async def store_search(
-    namespace: str = "",
-    query: str = "",
-    limit: int = 10
-) -> str:
+async def store_search(namespace: str = "", query: str = "", limit: int = 10) -> str:
     """Search for items using semantic search.
 
     This uses embeddings to find semantically similar content.
@@ -218,9 +195,7 @@ async def store_search(
 
 
 @mcp.tool()
-async def store_count(
-    namespace: str = ""
-) -> str:
+async def store_count(namespace: str = "") -> str:
     """Count items in a namespace.
 
     Args:
@@ -239,11 +214,9 @@ async def store_count(
 # Thread Tools
 # =============================================================================
 
+
 @mcp.tool()
-async def threads_list(
-    limit: int = 20,
-    status: str = ""
-) -> str:
+async def threads_list(limit: int = 20, status: str = "") -> str:
     """List conversation threads.
 
     Threads maintain state across multiple interactions with the agent.
@@ -265,9 +238,7 @@ async def threads_list(
 
 
 @mcp.tool()
-async def threads_get(
-    thread_id: str
-) -> str:
+async def threads_get(thread_id: str) -> str:
     """Get details for a specific thread.
 
     Args:
@@ -285,9 +256,7 @@ async def threads_get(
 
 
 @mcp.tool()
-async def threads_get_state(
-    thread_id: str
-) -> str:
+async def threads_get_state(thread_id: str) -> str:
     """Get the current state of a thread.
 
     The state contains the accumulated values from all interactions.
@@ -307,10 +276,7 @@ async def threads_get_state(
 
 
 @mcp.tool()
-async def threads_get_history(
-    thread_id: str,
-    limit: int = 10
-) -> str:
+async def threads_get_history(thread_id: str, limit: int = 10) -> str:
     """Get the state history of a thread.
 
     Shows how the thread state evolved over time (checkpoints).
@@ -329,10 +295,7 @@ async def threads_get_history(
 
 
 @mcp.tool()
-async def threads_create(
-    thread_id: str = "",
-    metadata_json: str = ""
-) -> str:
+async def threads_create(thread_id: str = "", metadata_json: str = "") -> str:
     """Create a new thread.
 
     Args:
@@ -359,9 +322,7 @@ async def threads_create(
 
 
 @mcp.tool()
-async def threads_delete(
-    thread_id: str
-) -> str:
+async def threads_delete(thread_id: str) -> str:
     """Delete a thread.
 
     Args:
@@ -380,11 +341,9 @@ async def threads_delete(
 # Memory Operations Tools
 # =============================================================================
 
+
 @mcp.tool()
-async def memory_analyze(
-    namespace: str = "",
-    detailed: bool = False
-) -> str:
+async def memory_analyze(namespace: str = "", detailed: bool = False) -> str:
     """Analyze memory usage and patterns.
 
     Provides insights into how memory is being used across namespaces.
@@ -417,10 +376,7 @@ async def memory_stats() -> str:
 
 @mcp.tool()
 async def memory_find(
-    namespace: str = "",
-    key_pattern: str = "",
-    value_contains: str = "",
-    limit: int = 50
+    namespace: str = "", key_pattern: str = "", value_contains: str = "", limit: int = 50
 ) -> str:
     """Find memories matching specific criteria.
 
@@ -441,17 +397,13 @@ async def memory_find(
         namespace=namespace,
         key_pattern=key_pattern or None,
         value_contains=value_contains or None,
-        limit=limit
+        limit=limit,
     )
     return json.dumps(result, indent=2, default=str)
 
 
 @mcp.tool()
-async def memory_grep(
-    pattern: str,
-    namespace: str = "",
-    limit: int = 50
-) -> str:
+async def memory_grep(pattern: str, namespace: str = "", limit: int = 50) -> str:
     """Search memory values with a text/regex pattern.
 
     Like grep, searches through all stored values for matches.
@@ -471,10 +423,7 @@ async def memory_grep(
 
 
 @mcp.tool()
-async def memory_export(
-    namespace: str = "",
-    format: str = "json"
-) -> str:
+async def memory_export(namespace: str = "", format: str = "json") -> str:
     """Export memories from a namespace.
 
     Useful for backup or analysis.
@@ -502,10 +451,9 @@ async def memory_export(
 # Assistant Tools
 # =============================================================================
 
+
 @mcp.tool()
-async def assistants_list(
-    limit: int = 20
-) -> str:
+async def assistants_list(limit: int = 20) -> str:
     """List available assistants (graph configurations).
 
     Args:
@@ -521,9 +469,7 @@ async def assistants_list(
 
 
 @mcp.tool()
-async def assistants_get(
-    assistant_id: str
-) -> str:
+async def assistants_get(assistant_id: str) -> str:
     """Get details for a specific assistant.
 
     Args:
@@ -544,11 +490,9 @@ async def assistants_get(
 # Run Tools
 # =============================================================================
 
+
 @mcp.tool()
-async def runs_list(
-    thread_id: str,
-    limit: int = 20
-) -> str:
+async def runs_list(thread_id: str, limit: int = 20) -> str:
     """List runs for a thread.
 
     Runs are executions of the graph on a thread.
@@ -567,10 +511,7 @@ async def runs_list(
 
 
 @mcp.tool()
-async def runs_get(
-    thread_id: str,
-    run_id: str
-) -> str:
+async def runs_get(thread_id: str, run_id: str) -> str:
     """Get details for a specific run.
 
     Args:
@@ -591,6 +532,7 @@ async def runs_get(
 # =============================================================================
 # Entry Point
 # =============================================================================
+
 
 def main():
     """Run the MCP server."""

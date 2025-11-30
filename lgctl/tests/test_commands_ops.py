@@ -5,10 +5,10 @@ Tests for lgctl commands/ops module.
 import json
 import os
 import tempfile
+
 import pytest
 
 from lgctl.commands.ops import MemoryOps
-from lgctl.formatters import TableFormatter
 
 
 class TestMemoryOps:
@@ -65,11 +65,7 @@ class TestMemoryOps:
     @pytest.mark.asyncio
     async def test_prune_dry_run(self, memory_ops):
         """Test pruning with dry run."""
-        result = await memory_ops.prune(
-            namespace="user,123",
-            days_old=30,
-            dry_run=True
-        )
+        result = await memory_ops.prune(namespace="user,123", days_old=30, dry_run=True)
         assert result["dry_run"] is True
         assert "total_items" in result
         assert "to_delete" in result
@@ -79,9 +75,7 @@ class TestMemoryOps:
     async def test_prune_with_before_timestamp(self, memory_ops):
         """Test pruning with before timestamp."""
         result = await memory_ops.prune(
-            namespace="user,123",
-            before="2024-01-01T00:00:00Z",
-            dry_run=True
+            namespace="user,123", before="2024-01-01T00:00:00Z", dry_run=True
         )
         assert result["dry_run"] is True
 
@@ -91,7 +85,7 @@ class TestMemoryOps:
         result = await memory_ops.prune(
             namespace="user,123",
             days_old=1,  # Items older than 1 day
-            dry_run=False
+            dry_run=False,
         )
         assert result["dry_run"] is False
         assert "deleted" in result
@@ -103,20 +97,13 @@ class TestMemoryOps:
         def should_delete(item):
             return item.get("key", "").startswith("temp_")
 
-        result = await memory_ops.prune(
-            namespace="user,123",
-            filter_fn=should_delete,
-            dry_run=True
-        )
+        result = await memory_ops.prune(namespace="user,123", filter_fn=should_delete, dry_run=True)
         assert "to_delete" in result
 
     @pytest.mark.asyncio
     async def test_export_to_stdout_jsonl(self, memory_ops):
         """Test exporting to stdout as JSONL."""
-        result = await memory_ops.export(
-            namespace="user,123",
-            format="jsonl"
-        )
+        result = await memory_ops.export(namespace="user,123", format="jsonl")
         assert "exported" in result
         assert "data" in result
         # JSONL format should have newline-separated JSON
@@ -130,10 +117,7 @@ class TestMemoryOps:
     @pytest.mark.asyncio
     async def test_export_to_stdout_json(self, memory_ops):
         """Test exporting to stdout as JSON."""
-        result = await memory_ops.export(
-            namespace="user,123",
-            format="json"
-        )
+        result = await memory_ops.export(namespace="user,123", format="json")
         assert "exported" in result
         assert "data" in result
 
@@ -145,9 +129,7 @@ class TestMemoryOps:
 
         try:
             result = await memory_ops.export(
-                namespace="user,123",
-                output_file=temp_path,
-                format="jsonl"
+                namespace="user,123", output_file=temp_path, format="jsonl"
             )
             assert result["file"] == temp_path
             assert result["format"] == "jsonl"
@@ -169,9 +151,7 @@ class TestMemoryOps:
 
         try:
             result = await memory_ops.export(
-                namespace="user,123",
-                output_file=temp_path,
-                format="json"
+                namespace="user,123", output_file=temp_path, format="json"
             )
             assert result["file"] == temp_path
 
@@ -185,19 +165,13 @@ class TestMemoryOps:
     @pytest.mark.asyncio
     async def test_export_with_key_pattern(self, memory_ops):
         """Test exporting with key pattern filter."""
-        result = await memory_ops.export(
-            namespace="user,123",
-            key_pattern="pref"
-        )
+        result = await memory_ops.export(namespace="user,123", key_pattern="pref")
         assert "exported" in result
 
     @pytest.mark.asyncio
     async def test_export_with_value_contains(self, memory_ops):
         """Test exporting with value contains filter."""
-        result = await memory_ops.export(
-            namespace="user,123",
-            value_contains="theme"
-        )
+        result = await memory_ops.export(namespace="user,123", value_contains="theme")
         assert "exported" in result
 
     @pytest.mark.asyncio
@@ -215,10 +189,7 @@ class TestMemoryOps:
             temp_path = f.name
 
         try:
-            result = await memory_ops.import_(
-                input_file=temp_path,
-                dry_run=True
-            )
+            result = await memory_ops.import_(input_file=temp_path, dry_run=True)
             assert result["total_items"] == 2
             assert result["dry_run"] is True
         finally:
@@ -237,10 +208,7 @@ class TestMemoryOps:
             temp_path = f.name
 
         try:
-            result = await memory_ops.import_(
-                input_file=temp_path,
-                dry_run=True
-            )
+            result = await memory_ops.import_(input_file=temp_path, dry_run=True)
             assert result["total_items"] == 2
         finally:
             os.unlink(temp_path)
@@ -259,9 +227,7 @@ class TestMemoryOps:
 
         try:
             result = await memory_ops.import_(
-                input_file=temp_path,
-                namespace_prefix="imported",
-                dry_run=True
+                input_file=temp_path, namespace_prefix="imported", dry_run=True
             )
             assert result["total_items"] == 1
         finally:
@@ -280,11 +246,7 @@ class TestMemoryOps:
             temp_path = f.name
 
         try:
-            result = await memory_ops.import_(
-                input_file=temp_path,
-                dry_run=False,
-                overwrite=True
-            )
+            result = await memory_ops.import_(input_file=temp_path, dry_run=False, overwrite=True)
             assert "imported" in result
         finally:
             os.unlink(temp_path)
@@ -292,10 +254,7 @@ class TestMemoryOps:
     @pytest.mark.asyncio
     async def test_dedupe_dry_run(self, memory_ops):
         """Test deduplication with dry run."""
-        result = await memory_ops.dedupe(
-            namespace="user,123",
-            dry_run=True
-        )
+        result = await memory_ops.dedupe(namespace="user,123", dry_run=True)
         assert result["dry_run"] is True
         assert "total_items" in result
         assert "unique_items" in result
@@ -305,10 +264,7 @@ class TestMemoryOps:
     @pytest.mark.asyncio
     async def test_dedupe_actual(self, memory_ops):
         """Test actual deduplication."""
-        result = await memory_ops.dedupe(
-            namespace="user,123",
-            dry_run=False
-        )
+        result = await memory_ops.dedupe(namespace="user,123", dry_run=False)
         assert result["dry_run"] is False
         assert "deleted" in result
 
@@ -319,11 +275,7 @@ class TestMemoryOps:
         def custom_key(value):
             return value.get("id", str(value))
 
-        result = await memory_ops.dedupe(
-            namespace="user,123",
-            key_fn=custom_key,
-            dry_run=True
-        )
+        result = await memory_ops.dedupe(namespace="user,123", key_fn=custom_key, dry_run=True)
         assert "duplicates" in result
 
     @pytest.mark.asyncio
@@ -345,10 +297,7 @@ class TestMemoryOps:
     @pytest.mark.asyncio
     async def test_find_by_key_pattern(self, memory_ops):
         """Test finding by key pattern."""
-        result = await memory_ops.find(
-            namespace="user,123",
-            key_pattern="pref"
-        )
+        result = await memory_ops.find(namespace="user,123", key_pattern="pref")
         assert isinstance(result, list)
         for item in result:
             assert "pref" in item["key"]
@@ -356,19 +305,13 @@ class TestMemoryOps:
     @pytest.mark.asyncio
     async def test_find_by_value_contains(self, memory_ops):
         """Test finding by value contains."""
-        result = await memory_ops.find(
-            namespace="user,123",
-            value_contains="dark"
-        )
+        result = await memory_ops.find(namespace="user,123", value_contains="dark")
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
     async def test_find_with_limit(self, memory_ops):
         """Test finding with limit."""
-        result = await memory_ops.find(
-            namespace="user,123",
-            limit=5
-        )
+        result = await memory_ops.find(namespace="user,123", limit=5)
         assert len(result) <= 5
 
     @pytest.mark.asyncio
@@ -380,10 +323,7 @@ class TestMemoryOps:
     @pytest.mark.asyncio
     async def test_grep_basic(self, memory_ops):
         """Test basic grep search."""
-        result = await memory_ops.grep(
-            pattern="theme",
-            namespace="user,123"
-        )
+        result = await memory_ops.grep(pattern="theme", namespace="user,123")
         assert isinstance(result, list)
         for match in result:
             assert "namespace" in match
@@ -396,27 +336,20 @@ class TestMemoryOps:
         """Test grep with regex pattern."""
         result = await memory_ops.grep(
             pattern=r"\d+",  # Match numbers
-            namespace="user,123"
+            namespace="user,123",
         )
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
     async def test_grep_all_namespaces(self, memory_ops):
         """Test grep across all namespaces."""
-        result = await memory_ops.grep(
-            pattern="theme",
-            namespace=""
-        )
+        result = await memory_ops.grep(pattern="theme", namespace="")
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
     async def test_grep_with_limit(self, memory_ops):
         """Test grep with limit."""
-        result = await memory_ops.grep(
-            pattern=".*",
-            namespace="user,123",
-            limit=5
-        )
+        result = await memory_ops.grep(pattern=".*", namespace="user,123", limit=5)
         assert len(result) <= 5
 
     @pytest.mark.asyncio
@@ -424,7 +357,7 @@ class TestMemoryOps:
         """Test grep falls back to string match for invalid regex."""
         result = await memory_ops.grep(
             pattern="[invalid(regex",  # Invalid regex
-            namespace="user,123"
+            namespace="user,123",
         )
         # Should still work (falls back to string match)
         assert isinstance(result, list)
@@ -441,6 +374,7 @@ class TestMemoryOpsEdgeCases:
     @pytest.mark.asyncio
     async def test_analyze_empty_namespace(self, memory_ops, mock_client):
         """Test analyzing when no namespaces exist."""
+
         # Mock empty response
         async def empty_namespaces(*args, **kwargs):
             return {"namespaces": []}
@@ -454,6 +388,7 @@ class TestMemoryOpsEdgeCases:
     @pytest.mark.asyncio
     async def test_export_empty_namespace(self, memory_ops, mock_client):
         """Test exporting empty namespace."""
+
         async def empty_items(*args, **kwargs):
             return {"items": []}
 
@@ -465,6 +400,7 @@ class TestMemoryOpsEdgeCases:
     @pytest.mark.asyncio
     async def test_dedupe_no_duplicates(self, memory_ops, mock_client):
         """Test deduplication when no duplicates exist."""
+
         async def unique_items(*args, **kwargs):
             return {
                 "items": [
@@ -481,27 +417,23 @@ class TestMemoryOpsEdgeCases:
     @pytest.mark.asyncio
     async def test_find_no_matches(self, memory_ops, mock_client):
         """Test finding when no matches exist."""
+
         async def no_items(*args, **kwargs):
             return {"items": []}
 
         mock_client.store.search_items = no_items
 
-        result = await memory_ops.find(
-            namespace="test",
-            key_pattern="nonexistent"
-        )
+        result = await memory_ops.find(namespace="test", key_pattern="nonexistent")
         assert result == []
 
     @pytest.mark.asyncio
     async def test_grep_no_matches(self, memory_ops, mock_client):
         """Test grep when no matches exist."""
+
         async def no_items(*args, **kwargs):
             return {"items": []}
 
         mock_client.store.search_items = no_items
 
-        result = await memory_ops.grep(
-            pattern="nonexistent",
-            namespace="test"
-        )
+        result = await memory_ops.grep(pattern="nonexistent", namespace="test")
         assert result == []

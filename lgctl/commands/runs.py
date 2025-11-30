@@ -7,7 +7,8 @@ Runs are executions of a graph on a thread. They can be:
 - Streaming or blocking
 """
 
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import AsyncIterator, Dict, List, Optional
+
 from ..client import LGCtlClient
 from ..formatters import Formatter
 
@@ -31,11 +32,7 @@ class RunCommands:
         self.fmt = formatter
 
     async def ls(
-        self,
-        thread_id: str,
-        limit: int = 20,
-        offset: int = 0,
-        status: Optional[str] = None
+        self, thread_id: str, limit: int = 20, offset: int = 0, status: Optional[str] = None
     ) -> List[Dict]:
         """
         List runs for a thread.
@@ -101,7 +98,7 @@ class RunCommands:
         config: Optional[Dict] = None,
         multitask_strategy: str = "reject",
         interrupt_before: Optional[List[str]] = None,
-        interrupt_after: Optional[List[str]] = None
+        interrupt_after: Optional[List[str]] = None,
     ) -> Dict:
         """
         Create/start a new run.
@@ -150,7 +147,7 @@ class RunCommands:
         input: Optional[Dict] = None,
         config: Optional[Dict] = None,
         multitask_strategy: str = "reject",
-        raise_on_error: bool = True
+        raise_on_error: bool = True,
     ) -> Dict:
         """
         Start a run and wait for completion.
@@ -175,11 +172,7 @@ class RunCommands:
         if config:
             kwargs["config"] = config
 
-        result = await self.client.runs.wait(
-            thread_id,
-            **kwargs,
-            raise_on_error=raise_on_error
-        )
+        result = await self.client.runs.wait(thread_id, **kwargs, raise_on_error=raise_on_error)
         return result
 
     async def stream(
@@ -189,7 +182,7 @@ class RunCommands:
         input: Optional[Dict] = None,
         config: Optional[Dict] = None,
         stream_mode: str = "values",
-        multitask_strategy: str = "reject"
+        multitask_strategy: str = "reject",
     ) -> AsyncIterator[Dict]:
         """
         Stream run output.
@@ -221,12 +214,7 @@ class RunCommands:
                 "data": chunk.data,
             }
 
-    async def cancel(
-        self,
-        thread_id: str,
-        run_id: str,
-        wait: bool = False
-    ) -> Dict:
+    async def cancel(self, thread_id: str, run_id: str, wait: bool = False) -> Dict:
         """
         Cancel a running run.
 
@@ -245,11 +233,7 @@ class RunCommands:
             "action": "cancelled",
         }
 
-    async def join(
-        self,
-        thread_id: str,
-        run_id: str
-    ) -> Dict:
+    async def join(self, thread_id: str, run_id: str) -> Dict:
         """
         Wait for a run to complete and get result.
 

@@ -11,7 +11,7 @@ __version__ = "0.1.0"
 __author__ = "searchbot"
 
 from .client import LGCtlClient, get_client
-from .formatters import Formatter, TableFormatter, JsonFormatter, RawFormatter
+from .formatters import Formatter, JsonFormatter, RawFormatter, TableFormatter
 
 __all__ = [
     "LGCtlClient",

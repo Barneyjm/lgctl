@@ -10,12 +10,12 @@ Commands follow Unix conventions:
 - Consistent argument ordering
 """
 
-from .store import StoreCommands
-from .threads import ThreadCommands
-from .runs import RunCommands
 from .assistants import AssistantCommands
 from .crons import CronCommands
 from .ops import MemoryOps
+from .runs import RunCommands
+from .store import StoreCommands
+from .threads import ThreadCommands
 
 __all__ = [
     "StoreCommands",

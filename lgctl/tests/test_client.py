@@ -3,8 +3,7 @@ Tests for lgctl client module.
 """
 
 import os
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from lgctl.client import LGCtlClient, get_client
 

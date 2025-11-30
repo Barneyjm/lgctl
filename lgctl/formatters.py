@@ -9,7 +9,7 @@ import json
 import sys
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 
 class Formatter(ABC):
@@ -63,7 +63,7 @@ class TableFormatter(Formatter):
         """Truncate long values for display."""
         s = str(value)
         if len(s) > self.truncate:
-            return s[:self.truncate - 3] + "..."
+            return s[: self.truncate - 3] + "..."
         return s
 
     def _format_timestamp(self, ts: Any) -> str:
@@ -114,7 +114,7 @@ class TableFormatter(Formatter):
         widths = {col: len(col) for col in cols}
         for item in items:
             for col in cols:
-                val = str(item.get(col, ""))[:self.truncate]
+                val = str(item.get(col, ""))[: self.truncate]
                 widths[col] = max(widths[col], len(val))
 
         # Build table

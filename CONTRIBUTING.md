@@ -35,40 +35,39 @@ pip install -e ".[all,dev]"
 ### Run All Tests
 
 ```bash
-pytest tests/ -v
+uv run pytest lgctl/tests/ -v
 ```
 
 ### Run Specific Test Files
 
 ```bash
 # Test formatters
-pytest tests/test_formatters.py -v
+uv run pytest lgctl/tests/test_formatters.py -v
 
 # Test CLI
-pytest tests/test_cli.py -v
+uv run pytest lgctl/tests/test_cli.py -v
 
 # Test REPL
-pytest tests/test_repl.py -v
+uv run pytest lgctl/tests/test_repl.py -v
 
 # Test MCP server (requires mcp package)
-pytest tests/test_mcp_server.py -v
+uv run pytest lgctl/tests/test_mcp_server.py -v
 ```
 
 ### Run Tests with Coverage
 
 ```bash
-pip install pytest-cov
-pytest tests/ --cov=lgctl --cov-report=term-missing
+uv run pytest lgctl/tests/ --cov=lgctl --cov-report=term-missing
 ```
 
 ## Test Structure
 
 ```
-tests/
+lgctl/tests/
 ├── __init__.py
 ├── conftest.py           # Shared fixtures and mock clients
 ├── test_formatters.py    # TableFormatter, JsonFormatter, RawFormatter
-├── test_client.py        # LGMemClient initialization
+├── test_client.py        # LGCtlClient initialization
 ├── test_commands_store.py      # Store commands (ls, get, put, rm, etc.)
 ├── test_commands_threads.py    # Thread commands
 ├── test_commands_runs.py       # Run commands
@@ -151,6 +150,37 @@ class TestExample:
 
 ## Code Style
 
+This project uses **ruff** for linting and formatting.
+
+### Linting
+
+```bash
+# Check for lint errors
+uv run ruff check lgctl/
+
+# Auto-fix lint errors
+uv run ruff check lgctl/ --fix
+```
+
+### Formatting
+
+```bash
+# Format code
+uv run ruff format lgctl/
+
+# Check formatting without changes
+uv run ruff format --check lgctl/
+```
+
+### Configuration
+
+Ruff is configured in `pyproject.toml`:
+- **Line length**: 100 characters
+- **Target**: Python 3.10+
+- **Rules**: E (errors), F (pyflakes), I (isort), W (warnings)
+
+### General Guidelines
+
 - Follow PEP 8 guidelines
 - Use type hints where appropriate
 - Write docstrings for public functions and classes
@@ -160,7 +190,12 @@ class TestExample:
 
 1. Create a feature branch from `main`
 2. Write tests for new functionality
-3. Ensure all tests pass: `pytest tests/ -v`
+3. Ensure all tests and linting pass:
+   ```bash
+   uv run pytest lgctl/tests/ -v
+   uv run ruff check lgctl/
+   uv run ruff format --check lgctl/
+   ```
 4. Update documentation if needed
 5. Submit a pull request
 

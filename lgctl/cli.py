@@ -13,22 +13,20 @@ Usage:
 import argparse
 import asyncio
 import json
-import os
 import sys
-from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 
 from .client import get_client
-from .formatters import get_formatter
 from .commands import (
-    StoreCommands,
-    ThreadCommands,
-    RunCommands,
     AssistantCommands,
     CronCommands,
     MemoryOps,
+    RunCommands,
+    StoreCommands,
+    ThreadCommands,
 )
+from .formatters import get_formatter
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -57,25 +55,16 @@ Examples:
     )
 
     # Global options
+    parser.add_argument("-u", "--url", help="LangGraph server URL (default: from env)")
+    parser.add_argument("-k", "--api-key", help="API key (default: from LANGSMITH_API_KEY)")
     parser.add_argument(
-        "-u", "--url",
-        help="LangGraph server URL (default: from env)"
-    )
-    parser.add_argument(
-        "-k", "--api-key",
-        help="API key (default: from LANGSMITH_API_KEY)"
-    )
-    parser.add_argument(
-        "-f", "--format",
+        "-f",
+        "--format",
         choices=["table", "json", "raw"],
         default="table",
-        help="Output format (default: table)"
+        help="Output format (default: table)",
     )
-    parser.add_argument(
-        "-q", "--quiet",
-        action="store_true",
-        help="Suppress non-essential output"
-    )
+    parser.add_argument("-q", "--quiet", action="store_true", help="Suppress non-essential output")
 
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
@@ -88,7 +77,9 @@ Examples:
     ls_parser.add_argument("namespace", nargs="?", default="", help="Namespace prefix")
     ls_parser.add_argument("-d", "--depth", type=int, default=2, help="Max depth")
     ls_parser.add_argument("-n", "--limit", type=int, default=100, help="Max results")
-    ls_parser.add_argument("-i", "--items", action="store_true", help="List items instead of namespaces")
+    ls_parser.add_argument(
+        "-i", "--items", action="store_true", help="List items instead of namespaces"
+    )
 
     # store get
     get_parser = store_sub.add_parser("get", aliases=["cat"], help="Get an item")
@@ -242,7 +233,9 @@ Examples:
     export_parser = ops_sub.add_parser("export", help="Export memories")
     export_parser.add_argument("namespace", nargs="?", default="", help="Namespace to export")
     export_parser.add_argument("-o", "--output", help="Output file")
-    export_parser.add_argument("--export-format", choices=["jsonl", "json"], default="jsonl", help="Export file format")
+    export_parser.add_argument(
+        "--export-format", choices=["jsonl", "json"], default="jsonl", help="Export file format"
+    )
     export_parser.add_argument("-k", "--key", help="Only export keys containing this string")
     export_parser.add_argument("-v", "--value", help="Only export values containing this string")
 
@@ -258,7 +251,9 @@ Examples:
     prune_parser.add_argument("namespace", help="Namespace to prune")
     prune_parser.add_argument("--days", type=int, help="Remove items older than N days")
     prune_parser.add_argument("--before", help="Remove items before timestamp")
-    prune_parser.add_argument("--dry-run", action="store_true", default=True, help="Don't actually delete")
+    prune_parser.add_argument(
+        "--dry-run", action="store_true", default=True, help="Don't actually delete"
+    )
     prune_parser.add_argument("--force", action="store_true", help="Actually delete")
 
     # ops dedupe
@@ -302,7 +297,7 @@ async def run_command(args: argparse.Namespace) -> int:
                     namespace=args.namespace,
                     max_depth=args.depth,
                     limit=args.limit,
-                    show_items=args.items
+                    show_items=args.items,
                 )
                 formatter.print_list(result)
 
@@ -327,25 +322,25 @@ async def run_command(args: argparse.Namespace) -> int:
 
             elif args.subcommand == "search":
                 result = await store.search(
-                    namespace=args.namespace,
-                    query=args.query,
-                    limit=args.limit
+                    namespace=args.namespace, query=args.query, limit=args.limit
                 )
                 formatter.print_list(result)
 
             elif args.subcommand == "mv":
                 result = await store.mv(
-                    args.src_namespace, args.src_key,
-                    args.dst_namespace, args.dst_key
+                    args.src_namespace, args.src_key, args.dst_namespace, args.dst_key
                 )
-                formatter.print_success(f"Moved to {args.dst_namespace}/{args.dst_key or args.src_key}")
+                formatter.print_success(
+                    f"Moved to {args.dst_namespace}/{args.dst_key or args.src_key}"
+                )
 
             elif args.subcommand == "cp":
                 result = await store.cp(
-                    args.src_namespace, args.src_key,
-                    args.dst_namespace, args.dst_key
+                    args.src_namespace, args.src_key, args.dst_namespace, args.dst_key
                 )
-                formatter.print_success(f"Copied to {args.dst_namespace}/{args.dst_key or args.src_key}")
+                formatter.print_success(
+                    f"Copied to {args.dst_namespace}/{args.dst_key or args.src_key}"
+                )
 
             elif args.subcommand == "count":
                 result = await store.count(args.namespace)
@@ -484,10 +479,10 @@ async def run_command(args: argparse.Namespace) -> int:
                     print(f"\nMemory Analysis: {result['namespace']}")
                     print(f"Total namespaces: {result['total_namespaces']}")
                     print(f"Total items: {result['total_items']}")
-                    if result.get('largest_namespace'):
+                    if result.get("largest_namespace"):
                         print(f"Largest namespace: {result['largest_namespace']}")
-                    print(f"\nNamespace breakdown:")
-                    for ns in result['namespaces'][:20]:
+                    print("\nNamespace breakdown:")
+                    for ns in result["namespaces"][:20]:
                         print(f"  {ns['namespace']}: {ns.get('item_count', 'N/A')} items")
 
             elif args.subcommand == "stats":
@@ -500,7 +495,7 @@ async def run_command(args: argparse.Namespace) -> int:
                     output_file=args.output,
                     format=args.export_format,
                     key_pattern=args.key,
-                    value_contains=args.value
+                    value_contains=args.value,
                 )
                 if args.output:
                     formatter.print_success(f"Exported {result['exported']} items to {args.output}")
@@ -512,7 +507,7 @@ async def run_command(args: argparse.Namespace) -> int:
                     input_file=args.input_file,
                     namespace_prefix=args.prefix,
                     dry_run=not args.overwrite and args.dry_run,
-                    overwrite=args.overwrite
+                    overwrite=args.overwrite,
                 )
                 formatter.print_item(result)
 
@@ -521,15 +516,12 @@ async def run_command(args: argparse.Namespace) -> int:
                     namespace=args.namespace,
                     days_old=args.days,
                     before=args.before,
-                    dry_run=not args.force
+                    dry_run=not args.force,
                 )
                 formatter.print_item(result)
 
             elif args.subcommand == "dedupe":
-                result = await ops.dedupe(
-                    namespace=args.namespace,
-                    dry_run=not args.force
-                )
+                result = await ops.dedupe(namespace=args.namespace, dry_run=not args.force)
                 formatter.print_item(result)
 
             elif args.subcommand == "find":
@@ -537,15 +529,13 @@ async def run_command(args: argparse.Namespace) -> int:
                     namespace=args.namespace,
                     key_pattern=args.key,
                     value_contains=args.value,
-                    limit=args.limit
+                    limit=args.limit,
                 )
                 formatter.print_list(result)
 
             elif args.subcommand == "grep":
                 result = await ops.grep(
-                    pattern=args.pattern,
-                    namespace=args.namespace,
-                    limit=args.limit
+                    pattern=args.pattern, namespace=args.namespace, limit=args.limit
                 )
                 formatter.print_list(result)
 
@@ -555,6 +545,7 @@ async def run_command(args: argparse.Namespace) -> int:
 
         elif args.command == "repl":
             from .repl import REPL
+
             repl = REPL(client, formatter)
             await repl.run()
 

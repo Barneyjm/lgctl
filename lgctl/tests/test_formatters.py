@@ -3,15 +3,14 @@ Tests for lgctl formatters module.
 """
 
 import json
+
 import pytest
-from io import StringIO
-import sys
 
 from lgctl.formatters import (
     Formatter,
-    TableFormatter,
     JsonFormatter,
     RawFormatter,
+    TableFormatter,
     get_formatter,
 )
 
@@ -258,6 +257,7 @@ class TestJsonFormatter:
     def test_format_with_datetime(self, json_formatter):
         """Test formatting with datetime (uses default=str)."""
         from datetime import datetime
+
         item = {"timestamp": datetime(2024, 1, 15, 12, 30, 45)}
         result = json_formatter.format_item(item)
         parsed = json.loads(result)

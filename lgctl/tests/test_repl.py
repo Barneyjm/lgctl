@@ -3,10 +3,8 @@ Tests for lgctl REPL module.
 """
 
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
 
 from lgctl.repl import REPL
-from lgctl.formatters import TableFormatter
 
 
 class TestREPLInit:
@@ -485,6 +483,7 @@ class TestREPLErrorHandling:
     @pytest.mark.asyncio
     async def test_command_error_handling(self, repl, capsys, mock_client):
         """Test error handling in commands."""
+
         # Make store raise an exception
         async def raise_error(*args, **kwargs):
             raise Exception("Test error")

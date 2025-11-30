@@ -5,7 +5,6 @@ Tests for lgctl commands/crons module.
 import pytest
 
 from lgctl.commands.crons import CronCommands
-from lgctl.formatters import TableFormatter
 
 
 class TestCronCommands:
@@ -74,7 +73,7 @@ class TestCronCommands:
         """Test basic cron creation."""
         result = await cron_commands.create(
             assistant_id="assistant-001",
-            schedule="0 * * * *"  # Hourly
+            schedule="0 * * * *",  # Hourly
         )
         assert result is not None
         assert "cron_id" in result
@@ -87,7 +86,7 @@ class TestCronCommands:
         result = await cron_commands.create(
             assistant_id="assistant-001",
             schedule="*/5 * * * *",  # Every 5 minutes
-            thread_id="thread-001"
+            thread_id="thread-001",
         )
         assert result is not None
         assert result["thread_id"] == "thread-001"
@@ -98,7 +97,7 @@ class TestCronCommands:
         result = await cron_commands.create(
             assistant_id="assistant-001",
             schedule="0 0 * * *",  # Daily at midnight
-            input={"action": "daily_sync"}
+            input={"action": "daily_sync"},
         )
         assert result is not None
 
@@ -108,7 +107,7 @@ class TestCronCommands:
         result = await cron_commands.create(
             assistant_id="assistant-001",
             schedule="0 0 * * 0",  # Weekly on Sunday
-            metadata={"purpose": "weekly_report"}
+            metadata={"purpose": "weekly_report"},
         )
         assert result is not None
 
@@ -116,10 +115,7 @@ class TestCronCommands:
     async def test_rm_cron(self, cron_commands):
         """Test deleting a cron."""
         # Create first
-        created = await cron_commands.create(
-            assistant_id="assistant-001",
-            schedule="0 0 * * *"
-        )
+        created = await cron_commands.create(assistant_id="assistant-001", schedule="0 0 * * *")
 
         # Delete
         result = await cron_commands.rm(created["cron_id"])
@@ -132,7 +128,7 @@ class TestCronCommands:
         """Test patching cron schedule."""
         result = await cron_commands.patch(
             cron_id="cron-001",
-            schedule="*/10 * * * *"  # Every 10 minutes
+            schedule="*/10 * * * *",  # Every 10 minutes
         )
         assert result is not None
         assert result["cron_id"] == "cron-001"
@@ -141,19 +137,13 @@ class TestCronCommands:
     @pytest.mark.asyncio
     async def test_patch_input(self, cron_commands):
         """Test patching cron input."""
-        result = await cron_commands.patch(
-            cron_id="cron-001",
-            input={"updated": True}
-        )
+        result = await cron_commands.patch(cron_id="cron-001", input={"updated": True})
         assert result is not None
 
     @pytest.mark.asyncio
     async def test_patch_metadata(self, cron_commands):
         """Test patching cron metadata."""
-        result = await cron_commands.patch(
-            cron_id="cron-001",
-            metadata={"version": "2.0"}
-        )
+        result = await cron_commands.patch(cron_id="cron-001", metadata={"version": "2.0"})
         assert result is not None
 
     @pytest.mark.asyncio
@@ -188,8 +178,13 @@ class TestCronCommandsReturnFormat:
         if result:
             cron = result[0]
             expected_fields = {
-                "cron_id", "thread_id", "assistant_id",
-                "schedule", "enabled", "next_run_at", "created_at"
+                "cron_id",
+                "thread_id",
+                "assistant_id",
+                "schedule",
+                "enabled",
+                "next_run_at",
+                "created_at",
             }
             assert expected_fields.issubset(set(cron.keys()))
 
@@ -198,35 +193,39 @@ class TestCronCommandsReturnFormat:
         """Test get returns expected fields."""
         result = await cron_commands.get("cron-001")
         expected_fields = {
-            "cron_id", "thread_id", "assistant_id", "schedule",
-            "enabled", "input", "metadata", "next_run_at",
-            "last_run_at", "created_at", "updated_at"
+            "cron_id",
+            "thread_id",
+            "assistant_id",
+            "schedule",
+            "enabled",
+            "input",
+            "metadata",
+            "next_run_at",
+            "last_run_at",
+            "created_at",
+            "updated_at",
         }
         assert expected_fields.issubset(set(result.keys()))
 
     @pytest.mark.asyncio
     async def test_create_returns_expected_fields(self, cron_commands):
         """Test create returns expected fields."""
-        result = await cron_commands.create(
-            assistant_id="assistant-001",
-            schedule="0 * * * *"
-        )
+        result = await cron_commands.create(assistant_id="assistant-001", schedule="0 * * * *")
         expected_fields = {
-            "cron_id", "thread_id", "assistant_id",
-            "schedule", "next_run_at", "created_at"
+            "cron_id",
+            "thread_id",
+            "assistant_id",
+            "schedule",
+            "next_run_at",
+            "created_at",
         }
         assert expected_fields.issubset(set(result.keys()))
 
     @pytest.mark.asyncio
     async def test_patch_returns_expected_fields(self, cron_commands):
         """Test patch returns expected fields."""
-        result = await cron_commands.patch(
-            cron_id="cron-001",
-            schedule="*/15 * * * *"
-        )
-        expected_fields = {
-            "cron_id", "schedule", "next_run_at", "updated_at"
-        }
+        result = await cron_commands.patch(cron_id="cron-001", schedule="*/15 * * * *")
+        expected_fields = {"cron_id", "schedule", "next_run_at", "updated_at"}
         assert expected_fields.issubset(set(result.keys()))
 
 
@@ -241,44 +240,29 @@ class TestCronScheduleFormats:
     @pytest.mark.asyncio
     async def test_create_hourly(self, cron_commands):
         """Test creating hourly cron."""
-        result = await cron_commands.create(
-            assistant_id="assistant-001",
-            schedule="0 * * * *"
-        )
+        result = await cron_commands.create(assistant_id="assistant-001", schedule="0 * * * *")
         assert result["schedule"] == "0 * * * *"
 
     @pytest.mark.asyncio
     async def test_create_daily(self, cron_commands):
         """Test creating daily cron."""
-        result = await cron_commands.create(
-            assistant_id="assistant-001",
-            schedule="0 0 * * *"
-        )
+        result = await cron_commands.create(assistant_id="assistant-001", schedule="0 0 * * *")
         assert result["schedule"] == "0 0 * * *"
 
     @pytest.mark.asyncio
     async def test_create_weekly(self, cron_commands):
         """Test creating weekly cron."""
-        result = await cron_commands.create(
-            assistant_id="assistant-001",
-            schedule="0 0 * * 0"
-        )
+        result = await cron_commands.create(assistant_id="assistant-001", schedule="0 0 * * 0")
         assert result["schedule"] == "0 0 * * 0"
 
     @pytest.mark.asyncio
     async def test_create_monthly(self, cron_commands):
         """Test creating monthly cron."""
-        result = await cron_commands.create(
-            assistant_id="assistant-001",
-            schedule="0 0 1 * *"
-        )
+        result = await cron_commands.create(assistant_id="assistant-001", schedule="0 0 1 * *")
         assert result["schedule"] == "0 0 1 * *"
 
     @pytest.mark.asyncio
     async def test_create_every_5_minutes(self, cron_commands):
         """Test creating cron every 5 minutes."""
-        result = await cron_commands.create(
-            assistant_id="assistant-001",
-            schedule="*/5 * * * *"
-        )
+        result = await cron_commands.create(assistant_id="assistant-001", schedule="*/5 * * * *")
         assert result["schedule"] == "*/5 * * * *"

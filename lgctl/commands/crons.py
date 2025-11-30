@@ -4,7 +4,8 @@ Cron commands for lgctl.
 Crons schedule recurring runs on threads.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
+
 from ..client import LGCtlClient
 from ..formatters import Formatter
 
@@ -32,7 +33,7 @@ class CronCommands:
         assistant_id: Optional[str] = None,
         thread_id: Optional[str] = None,
         limit: int = 20,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[Dict]:
         """
         List cron jobs.
@@ -100,7 +101,7 @@ class CronCommands:
         schedule: str,
         thread_id: Optional[str] = None,
         input: Optional[Dict] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
     ) -> Dict:
         """
         Create a new cron job.
@@ -158,7 +159,7 @@ class CronCommands:
         cron_id: str,
         schedule: Optional[str] = None,
         input: Optional[Dict] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
     ) -> Dict:
         """
         Update a cron job.
@@ -198,7 +199,7 @@ class CronCommands:
         Returns:
             Update confirmation
         """
-        cron = await self.client.crons.update(cron_id, enabled=True)
+        await self.client.crons.update(cron_id, enabled=True)
         return {
             "status": "ok",
             "cron_id": cron_id,
@@ -215,7 +216,7 @@ class CronCommands:
         Returns:
             Update confirmation
         """
-        cron = await self.client.crons.update(cron_id, enabled=False)
+        await self.client.crons.update(cron_id, enabled=False)
         return {
             "status": "ok",
             "cron_id": cron_id,

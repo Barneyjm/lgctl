@@ -5,22 +5,20 @@ Provides an interactive shell with command completion,
 history, and contextual navigation.
 """
 
-import asyncio
 import json
 import shlex
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from .client import LGCtlClient
-from .formatters import Formatter, get_formatter
 from .commands import (
-    StoreCommands,
-    ThreadCommands,
-    RunCommands,
     AssistantCommands,
     CronCommands,
     MemoryOps,
+    RunCommands,
+    StoreCommands,
+    ThreadCommands,
 )
-from .commands.store import parse_namespace, format_namespace
+from .formatters import Formatter
 
 
 class REPL:
@@ -235,7 +233,7 @@ Format: lgctl> or [namespace]> when namespace is set
                 print(f"ok: deleted {ns}/{key}")
 
             elif cmd in ("search", "s"):
-                if self.current_namespace and (len(args) == 0 or not "," in args[0]):
+                if self.current_namespace and (len(args) == 0 or "," not in args[0]):
                     ns = self.current_namespace
                     query = " ".join(args)
                 elif args:
@@ -334,10 +332,10 @@ Format: lgctl> or [namespace]> when namespace is set
                 print(f"\nMemory Analysis: {result['namespace']}")
                 print(f"Total namespaces: {result['total_namespaces']}")
                 print(f"Total items: {result['total_items']}")
-                if result.get('largest_namespace'):
+                if result.get("largest_namespace"):
                     print(f"Largest namespace: {result['largest_namespace']}")
-                print(f"\nNamespace breakdown:")
-                for ns_info in result['namespaces'][:20]:
+                print("\nNamespace breakdown:")
+                for ns_info in result["namespaces"][:20]:
                     print(f"  {ns_info['namespace']}: {ns_info.get('item_count', 'N/A')} items")
 
             elif cmd == "stats":
@@ -363,9 +361,7 @@ Format: lgctl> or [namespace]> when namespace is set
 
                 ns = ns or self._resolve_namespace()
                 result = await self.ops.find(
-                    namespace=ns,
-                    key_pattern=key_pattern,
-                    value_contains=value_contains
+                    namespace=ns, key_pattern=key_pattern, value_contains=value_contains
                 )
                 self.formatter.print_list(result)
 
@@ -383,7 +379,7 @@ Format: lgctl> or [namespace]> when namespace is set
                 output_file = None
 
                 for arg in args:
-                    if "." in arg and not "," in arg:
+                    if "." in arg and "," not in arg:
                         output_file = arg
                     else:
                         ns = arg

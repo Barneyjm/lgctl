@@ -3,10 +3,11 @@ Tests for lgctl CLI module.
 """
 
 import argparse
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, patch
 
-from lgctl.cli import create_parser, run_command, main
+import pytest
+
+from lgctl.cli import create_parser, main, run_command
 
 
 class TestCreateParser:

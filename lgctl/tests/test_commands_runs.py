@@ -5,7 +5,6 @@ Tests for lgctl commands/runs module.
 import pytest
 
 from lgctl.commands.runs import RunCommands
-from lgctl.formatters import TableFormatter
 
 
 class TestRunCommands:
@@ -72,10 +71,7 @@ class TestRunCommands:
     @pytest.mark.asyncio
     async def test_create_basic(self, run_commands):
         """Test basic run creation."""
-        result = await run_commands.create(
-            thread_id="thread-001",
-            assistant_id="assistant-001"
-        )
+        result = await run_commands.create(thread_id="thread-001", assistant_id="assistant-001")
         assert result is not None
         assert "run_id" in result
         assert result["thread_id"] == "thread-001"
@@ -85,9 +81,7 @@ class TestRunCommands:
     async def test_create_with_input(self, run_commands):
         """Test run creation with input."""
         result = await run_commands.create(
-            thread_id="thread-001",
-            assistant_id="assistant-001",
-            input={"message": "Hello"}
+            thread_id="thread-001", assistant_id="assistant-001", input={"message": "Hello"}
         )
         assert result is not None
         assert "run_id" in result
@@ -96,9 +90,7 @@ class TestRunCommands:
     async def test_create_with_metadata(self, run_commands):
         """Test run creation with metadata."""
         result = await run_commands.create(
-            thread_id="thread-001",
-            assistant_id="assistant-001",
-            metadata={"source": "test"}
+            thread_id="thread-001", assistant_id="assistant-001", metadata={"source": "test"}
         )
         assert result is not None
 
@@ -106,9 +98,7 @@ class TestRunCommands:
     async def test_create_with_config(self, run_commands):
         """Test run creation with config."""
         result = await run_commands.create(
-            thread_id="thread-001",
-            assistant_id="assistant-001",
-            config={"model": "gpt-4"}
+            thread_id="thread-001", assistant_id="assistant-001", config={"model": "gpt-4"}
         )
         assert result is not None
 
@@ -116,9 +106,7 @@ class TestRunCommands:
     async def test_create_with_multitask_strategy(self, run_commands):
         """Test run creation with multitask strategy."""
         result = await run_commands.create(
-            thread_id="thread-001",
-            assistant_id="assistant-001",
-            multitask_strategy="enqueue"
+            thread_id="thread-001", assistant_id="assistant-001", multitask_strategy="enqueue"
         )
         assert result is not None
 
@@ -129,17 +117,14 @@ class TestRunCommands:
             thread_id="thread-001",
             assistant_id="assistant-001",
             interrupt_before=["agent"],
-            interrupt_after=["tool"]
+            interrupt_after=["tool"],
         )
         assert result is not None
 
     @pytest.mark.asyncio
     async def test_wait_basic(self, run_commands):
         """Test waiting for run completion."""
-        result = await run_commands.wait(
-            thread_id="thread-001",
-            assistant_id="assistant-001"
-        )
+        result = await run_commands.wait(thread_id="thread-001", assistant_id="assistant-001")
         assert result is not None
         assert "status" in result
 
@@ -147,9 +132,7 @@ class TestRunCommands:
     async def test_wait_with_input(self, run_commands):
         """Test waiting with input."""
         result = await run_commands.wait(
-            thread_id="thread-001",
-            assistant_id="assistant-001",
-            input={"message": "test"}
+            thread_id="thread-001", assistant_id="assistant-001", input={"message": "test"}
         )
         assert result is not None
 
@@ -157,9 +140,7 @@ class TestRunCommands:
     async def test_wait_with_config(self, run_commands):
         """Test waiting with config."""
         result = await run_commands.wait(
-            thread_id="thread-001",
-            assistant_id="assistant-001",
-            config={"timeout": 30}
+            thread_id="thread-001", assistant_id="assistant-001", config={"timeout": 30}
         )
         assert result is not None
 
@@ -212,8 +193,12 @@ class TestRunCommandsReturnFormat:
         if result:
             run = result[0]
             expected_fields = {
-                "run_id", "thread_id", "assistant_id",
-                "status", "created_at", "updated_at"
+                "run_id",
+                "thread_id",
+                "assistant_id",
+                "status",
+                "created_at",
+                "updated_at",
             }
             assert expected_fields.issubset(set(run.keys()))
 
@@ -222,22 +207,21 @@ class TestRunCommandsReturnFormat:
         """Test get returns expected fields."""
         result = await run_commands.get("thread-001", "run-001")
         expected_fields = {
-            "run_id", "thread_id", "assistant_id",
-            "status", "metadata", "created_at", "updated_at"
+            "run_id",
+            "thread_id",
+            "assistant_id",
+            "status",
+            "metadata",
+            "created_at",
+            "updated_at",
         }
         assert expected_fields.issubset(set(result.keys()))
 
     @pytest.mark.asyncio
     async def test_create_returns_expected_fields(self, run_commands):
         """Test create returns expected fields."""
-        result = await run_commands.create(
-            thread_id="thread-001",
-            assistant_id="assistant-001"
-        )
-        expected_fields = {
-            "run_id", "thread_id", "assistant_id",
-            "status", "created_at"
-        }
+        result = await run_commands.create(thread_id="thread-001", assistant_id="assistant-001")
+        expected_fields = {"run_id", "thread_id", "assistant_id", "status", "created_at"}
         assert expected_fields.issubset(set(result.keys()))
 
 
@@ -252,6 +236,7 @@ class TestRunCommandsStream:
     @pytest.mark.asyncio
     async def test_stream_basic(self, run_commands, mock_client):
         """Test basic streaming."""
+
         # Set up mock stream
         async def mock_stream(*args, **kwargs):
             class MockChunk:
@@ -267,8 +252,7 @@ class TestRunCommandsStream:
 
         chunks = []
         async for chunk in run_commands.stream(
-            thread_id="thread-001",
-            assistant_id="assistant-001"
+            thread_id="thread-001", assistant_id="assistant-001"
         ):
             chunks.append(chunk)
 
@@ -280,6 +264,7 @@ class TestRunCommandsStream:
     @pytest.mark.asyncio
     async def test_stream_with_options(self, run_commands, mock_client):
         """Test streaming with options."""
+
         async def mock_stream(*args, **kwargs):
             class MockChunk:
                 def __init__(self, event, data):
@@ -297,7 +282,7 @@ class TestRunCommandsStream:
             input={"message": "test"},
             config={"model": "gpt-4"},
             stream_mode="values",
-            multitask_strategy="enqueue"
+            multitask_strategy="enqueue",
         ):
             chunks.append(chunk)
 

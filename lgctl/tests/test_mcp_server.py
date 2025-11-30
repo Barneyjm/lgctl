@@ -6,12 +6,14 @@ Run: pip install lgctl[mcp] or pip install mcp
 """
 
 import json
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
 
 # Check if mcp module is available
 try:
-    import mcp
+    import mcp  # noqa: F401
+
     HAS_MCP = True
 except ImportError:
     HAS_MCP = False
@@ -82,10 +84,7 @@ class TestMCPTools:
         from lgctl.mcp_server import store_put
 
         result = await store_put(
-            namespace="user,999",
-            key="test_key",
-            value="test_value",
-            is_json=False
+            namespace="user,999", key="test_key", value="test_value", is_json=False
         )
         parsed = json.loads(result)
         assert parsed["status"] == "ok"
@@ -96,10 +95,7 @@ class TestMCPTools:
         from lgctl.mcp_server import store_put
 
         result = await store_put(
-            namespace="user,999",
-            key="test_key",
-            value='{"data": 123}',
-            is_json=True
+            namespace="user,999", key="test_key", value='{"data": 123}', is_json=True
         )
         parsed = json.loads(result)
         assert parsed["status"] == "ok"
@@ -110,10 +106,7 @@ class TestMCPTools:
         from lgctl.mcp_server import store_put
 
         result = await store_put(
-            namespace="user,999",
-            key="test_key",
-            value="not valid json {",
-            is_json=True
+            namespace="user,999", key="test_key", value="not valid json {", is_json=True
         )
         parsed = json.loads(result)
         assert "error" in parsed
@@ -213,10 +206,7 @@ class TestMCPTools:
         """Test threads_create with metadata."""
         from lgctl.mcp_server import threads_create
 
-        result = await threads_create(
-            thread_id="custom-thread",
-            metadata_json='{"user": "test"}'
-        )
+        result = await threads_create(thread_id="custom-thread", metadata_json='{"user": "test"}')
         parsed = json.loads(result)
         assert "thread_id" in parsed
 
@@ -225,10 +215,7 @@ class TestMCPTools:
         """Test threads_create with invalid metadata JSON."""
         from lgctl.mcp_server import threads_create
 
-        result = await threads_create(
-            thread_id="",
-            metadata_json="not valid json {"
-        )
+        result = await threads_create(thread_id="", metadata_json="not valid json {")
         parsed = json.loads(result)
         assert "error" in parsed
 
@@ -275,10 +262,7 @@ class TestMCPTools:
         from lgctl.mcp_server import memory_find
 
         result = await memory_find(
-            namespace="user,123",
-            key_pattern="pref",
-            value_contains="",
-            limit=50
+            namespace="user,123", key_pattern="pref", value_contains="", limit=50
         )
         parsed = json.loads(result)
         assert isinstance(parsed, list)
@@ -288,11 +272,7 @@ class TestMCPTools:
         """Test memory_grep tool."""
         from lgctl.mcp_server import memory_grep
 
-        result = await memory_grep(
-            pattern="theme",
-            namespace="user,123",
-            limit=50
-        )
+        result = await memory_grep(pattern="theme", namespace="user,123", limit=50)
         parsed = json.loads(result)
         assert isinstance(parsed, list)
 
@@ -365,10 +345,10 @@ class TestGetLGCtlClient:
 
     def test_get_client_no_url(self):
         """Test get_client raises when no URL configured."""
-        from lgctl.mcp_server import get_lgctl_client, _client
-
         # Reset global client
         import lgctl.mcp_server
+        from lgctl.mcp_server import get_lgctl_client
+
         lgctl.mcp_server._client = None
 
         with patch.dict("os.environ", {}, clear=True):
@@ -378,22 +358,22 @@ class TestGetLGCtlClient:
 
     def test_get_client_with_env_url(self, mock_client):
         """Test get_client uses environment URL."""
-        from lgctl.mcp_server import get_lgctl_client
         import lgctl.mcp_server
+        from lgctl.mcp_server import get_lgctl_client
+
         lgctl.mcp_server._client = None
 
-        with patch.dict("os.environ", {
-            "LANGSMITH_DEPLOYMENT_URL": "http://test.example.com"
-        }):
+        with patch.dict("os.environ", {"LANGSMITH_DEPLOYMENT_URL": "http://test.example.com"}):
             with patch("lgctl.mcp_server.get_client") as mock_get:
                 mock_get.return_value = mock_client
-                client = get_lgctl_client()
+                get_lgctl_client()
                 mock_get.assert_called_once()
 
     def test_get_client_cached(self, mock_client):
         """Test get_client returns cached client."""
-        from lgctl.mcp_server import get_lgctl_client
         import lgctl.mcp_server
+        from lgctl.mcp_server import get_lgctl_client
+
         lgctl.mcp_server._client = mock_client
 
         # Should return cached client without creating new one
@@ -410,11 +390,13 @@ class TestMCPServerSetup:
     def test_mcp_server_created(self):
         """Test MCP server is created."""
         from lgctl.mcp_server import mcp
+
         assert mcp is not None
         assert mcp.name == "lgctl"
 
     def test_formatter_is_json(self):
         """Test formatter is JSON formatter."""
-        from lgctl.mcp_server import _formatter
         from lgctl.formatters import JsonFormatter
+        from lgctl.mcp_server import _formatter
+
         assert isinstance(_formatter, JsonFormatter)

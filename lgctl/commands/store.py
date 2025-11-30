@@ -8,6 +8,7 @@ Namespace format: "a,b,c" -> ("a", "b", "c")
 """
 
 from typing import Any, Dict, List, Optional, Tuple, Union
+
 from ..client import LGCtlClient
 from ..formatters import Formatter
 
@@ -57,11 +58,7 @@ class StoreCommands:
         self.fmt = formatter
 
     async def ls(
-        self,
-        namespace: str = "",
-        max_depth: int = 2,
-        limit: int = 100,
-        show_items: bool = False
+        self, namespace: str = "", max_depth: int = 2, limit: int = 100, show_items: bool = False
     ) -> List[Dict]:
         """
         List namespaces or items.
@@ -79,10 +76,7 @@ class StoreCommands:
 
         if show_items:
             # List items in the namespace
-            results = await self.client.store.search_items(
-                ns_tuple,
-                limit=limit
-            )
+            results = await self.client.store.search_items(ns_tuple, limit=limit)
             items = results.get("items", [])
             return [
                 {
@@ -95,9 +89,7 @@ class StoreCommands:
         else:
             # List namespaces
             response = await self.client.store.list_namespaces(
-                prefix=list(ns_tuple),
-                max_depth=max_depth,
-                limit=limit
+                prefix=list(ns_tuple), max_depth=max_depth, limit=limit
             )
 
             # Handle different response formats from the API
@@ -107,17 +99,9 @@ class StoreCommands:
             else:
                 namespaces = response
 
-            return [
-                {"namespace": format_namespace(ns)}
-                for ns in namespaces
-            ]
+            return [{"namespace": format_namespace(ns)} for ns in namespaces]
 
-    async def get(
-        self,
-        namespace: str,
-        key: str,
-        refresh_ttl: bool = False
-    ) -> Optional[Dict]:
+    async def get(self, namespace: str, key: str, refresh_ttl: bool = False) -> Optional[Dict]:
         """
         Get a specific item by namespace and key.
 
@@ -130,9 +114,7 @@ class StoreCommands:
             Item dict or None if not found
         """
         ns_tuple = parse_namespace(namespace)
-        item = await self.client.store.get_item(
-            ns_tuple, key, refresh_ttl=refresh_ttl
-        )
+        item = await self.client.store.get_item(ns_tuple, key, refresh_ttl=refresh_ttl)
         if item:
             return {
                 "namespace": format_namespace(item.get("namespace", [])),
@@ -144,11 +126,7 @@ class StoreCommands:
         return None
 
     async def put(
-        self,
-        namespace: str,
-        key: str,
-        value: Any,
-        index: Optional[List[str]] = None
+        self, namespace: str, key: str, value: Any, index: Optional[List[str]] = None
     ) -> Dict:
         """
         Store an item.
@@ -168,9 +146,7 @@ class StoreCommands:
         if not isinstance(value, dict):
             value = {"value": value}
 
-        await self.client.store.put_item(
-            ns_tuple, key, value, index=index
-        )
+        await self.client.store.put_item(ns_tuple, key, value, index=index)
 
         return {
             "status": "ok",
@@ -204,7 +180,7 @@ class StoreCommands:
         query: str = "",
         filter_dict: Optional[Dict] = None,
         limit: int = 10,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[Dict]:
         """
         Search items using semantic search.
@@ -221,11 +197,7 @@ class StoreCommands:
         """
         ns_tuple = parse_namespace(namespace)
         results = await self.client.store.search_items(
-            ns_tuple,
-            query=query,
-            filter=filter_dict or {},
-            limit=limit,
-            offset=offset
+            ns_tuple, query=query, filter=filter_dict or {}, limit=limit, offset=offset
         )
 
         items = results.get("items", [])
@@ -242,11 +214,7 @@ class StoreCommands:
         ]
 
     async def mv(
-        self,
-        src_namespace: str,
-        src_key: str,
-        dst_namespace: str,
-        dst_key: Optional[str] = None
+        self, src_namespace: str, src_key: str, dst_namespace: str, dst_key: Optional[str] = None
     ) -> Dict:
         """
         Move/rename an item.
@@ -281,11 +249,7 @@ class StoreCommands:
         }
 
     async def cp(
-        self,
-        src_namespace: str,
-        src_key: str,
-        dst_namespace: str,
-        dst_key: Optional[str] = None
+        self, src_namespace: str, src_key: str, dst_namespace: str, dst_key: Optional[str] = None
     ) -> Dict:
         """
         Copy an item.
@@ -329,7 +293,7 @@ class StoreCommands:
         ns_tuple = parse_namespace(namespace)
         results = await self.client.store.search_items(
             ns_tuple,
-            limit=10000  # High limit to get accurate count
+            limit=10000,  # High limit to get accurate count
         )
         count = len(results.get("items", []))
         return {
@@ -337,11 +301,7 @@ class StoreCommands:
             "count": count,
         }
 
-    async def tree(
-        self,
-        namespace: str = "",
-        max_depth: int = 10
-    ) -> List[Dict]:
+    async def tree(self, namespace: str = "", max_depth: int = 10) -> List[Dict]:
         """
         Show namespace tree structure.
 
@@ -354,9 +314,7 @@ class StoreCommands:
         """
         ns_tuple = parse_namespace(namespace)
         response = await self.client.store.list_namespaces(
-            prefix=list(ns_tuple),
-            max_depth=max_depth,
-            limit=1000
+            prefix=list(ns_tuple), max_depth=max_depth, limit=1000
         )
 
         # Handle different response formats from the API
@@ -371,11 +329,13 @@ class StoreCommands:
             depth = len(ns) - len(ns_tuple)
             indent = "  " * depth
             name = ns[-1] if ns else "(root)"
-            results.append({
-                "tree": f"{indent}{name}",
-                "namespace": format_namespace(ns),
-                "depth": depth,
-            })
+            results.append(
+                {
+                    "tree": f"{indent}{name}",
+                    "namespace": format_namespace(ns),
+                    "depth": depth,
+                }
+            )
 
         return results
 

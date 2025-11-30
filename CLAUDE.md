@@ -20,6 +20,11 @@ uv run pytest lgctl/tests/test_cli.py -v
 # Run MCP server tests (requires mcp package)
 uv pip install -e ".[mcp]"
 uv run pytest lgctl/tests/test_mcp_server.py -v
+
+# Linting and formatting
+uv run ruff check lgctl/              # Check for lint errors
+uv run ruff check lgctl/ --fix        # Auto-fix lint errors
+uv run ruff format lgctl/             # Format code
 ```
 
 ## Architecture
@@ -114,9 +119,23 @@ lgctl repl
 - Async tests use `pytest-asyncio` with auto mode
 - Run `uv pip install -e ".[dev,mcp]"` for full test suite
 
+## Code Style
+
+This project uses **ruff** for linting and formatting:
+- Line length: 100 characters
+- Target: Python 3.10+
+- Rules: E (errors), F (pyflakes), I (isort), W (warnings)
+
+Before committing, ensure code passes:
+```bash
+uv run ruff check lgctl/
+uv run ruff format --check lgctl/
+```
+
 ## Dependencies
 
 - `langgraph-sdk>=0.2.10` - LangGraph API client
 - `python-dotenv>=1.0.0` - Environment loading
 - `typing_extensions>=4.0.0` - Required by langgraph-sdk
 - `mcp>=1.0.0` (optional) - MCP server support
+- `ruff>=0.8.0` (dev) - Linting and formatting

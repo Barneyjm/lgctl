@@ -5,11 +5,10 @@ Tests for lgctl commands/store module.
 import pytest
 
 from lgctl.commands.store import (
-    parse_namespace,
-    format_namespace,
     StoreCommands,
+    format_namespace,
+    parse_namespace,
 )
-from lgctl.formatters import TableFormatter
 
 
 class TestParseNamespace:
@@ -354,10 +353,7 @@ class TestStoreCommandsEdgeCases:
     async def test_put_with_index(self, store_commands):
         """Test put with index parameter."""
         result = await store_commands.put(
-            "user,999",
-            "indexed_key",
-            {"searchable": "content"},
-            index=["searchable"]
+            "user,999", "indexed_key", {"searchable": "content"}, index=["searchable"]
         )
         assert result["status"] == "ok"
 
@@ -365,19 +361,14 @@ class TestStoreCommandsEdgeCases:
     async def test_search_with_filter(self, store_commands):
         """Test search with filter dict."""
         result = await store_commands.search(
-            namespace="user,123",
-            filter_dict={"type": "preference"}
+            namespace="user,123", filter_dict={"type": "preference"}
         )
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
     async def test_search_with_offset(self, store_commands):
         """Test search with pagination offset."""
-        result = await store_commands.search(
-            namespace="user,123",
-            offset=5,
-            limit=10
-        )
+        result = await store_commands.search(namespace="user,123", offset=5, limit=10)
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
@@ -390,6 +381,7 @@ class TestStoreCommandsEdgeCases:
     @pytest.mark.asyncio
     async def test_ls_handles_list_response(self, mock_client, table_formatter):
         """Test ls handles list response format."""
+
         # Patch to return list directly
         async def list_namespaces_list(*args, **kwargs):
             return [("user", "123"), ("user", "456")]

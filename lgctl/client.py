@@ -4,6 +4,7 @@ Core client wrapper for LangGraph SDK with flexible connection options.
 
 import os
 from typing import Optional
+
 from langgraph_sdk import get_client as sdk_get_client
 
 
@@ -18,10 +19,7 @@ class LGCtlClient:
     """
 
     def __init__(
-        self,
-        url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        timeout: float = 30.0
+        self, url: Optional[str] = None, api_key: Optional[str] = None, timeout: float = 30.0
     ):
         """
         Initialize the client.
@@ -35,18 +33,15 @@ class LGCtlClient:
         self.api_key = api_key or os.getenv("LANGSMITH_API_KEY")
         self.timeout = timeout
 
-        self._client = sdk_get_client(
-            url=self.url,
-            api_key=self.api_key
-        )
+        self._client = sdk_get_client(url=self.url, api_key=self.api_key)
 
     def _resolve_url(self) -> str:
         """Resolve the server URL from environment or defaults."""
         # Priority: LANGSMITH_DEPLOYMENT_URL > LANGGRAPH_URL > localhost
         return (
-            os.getenv("LANGSMITH_DEPLOYMENT_URL") or
-            os.getenv("LANGGRAPH_URL") or
-            "http://localhost:8123"
+            os.getenv("LANGSMITH_DEPLOYMENT_URL")
+            or os.getenv("LANGGRAPH_URL")
+            or "http://localhost:8123"
         )
 
     @property
@@ -83,10 +78,7 @@ class LGCtlClient:
         return f"LGCtlClient({self.url}, mode={mode})"
 
 
-def get_client(
-    url: Optional[str] = None,
-    api_key: Optional[str] = None
-) -> LGCtlClient:
+def get_client(url: Optional[str] = None, api_key: Optional[str] = None) -> LGCtlClient:
     """
     Convenience function to create a client.
 

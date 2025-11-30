@@ -5,7 +5,8 @@ Assistants are versioned configurations of graphs.
 They define how a graph behaves when executed.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
+
 from ..client import LGCtlClient
 from ..formatters import Formatter
 
@@ -33,7 +34,7 @@ class AssistantCommands:
         graph_id: Optional[str] = None,
         metadata: Optional[Dict] = None,
         limit: int = 20,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[Dict]:
         """
         List assistants.
@@ -98,7 +99,7 @@ class AssistantCommands:
         name: Optional[str] = None,
         config: Optional[Dict] = None,
         metadata: Optional[Dict] = None,
-        if_exists: str = "raise"
+        if_exists: str = "raise",
     ) -> Dict:
         """
         Create a new assistant.
@@ -178,7 +179,7 @@ class AssistantCommands:
         graph_id: Optional[str] = None,
         name: Optional[str] = None,
         config: Optional[Dict] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
     ) -> Dict:
         """
         Update an assistant.
@@ -211,12 +212,7 @@ class AssistantCommands:
             "updated_at": assistant.get("updated_at"),
         }
 
-    async def versions(
-        self,
-        assistant_id: str,
-        limit: int = 10,
-        offset: int = 0
-    ) -> List[Dict]:
+    async def versions(self, assistant_id: str, limit: int = 10, offset: int = 0) -> List[Dict]:
         """
         List assistant versions.
 

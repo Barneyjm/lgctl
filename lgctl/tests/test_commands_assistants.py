@@ -5,7 +5,6 @@ Tests for lgctl commands/assistants module.
 import pytest
 
 from lgctl.commands.assistants import AssistantCommands
-from lgctl.formatters import TableFormatter
 
 
 class TestAssistantCommands:
@@ -78,10 +77,7 @@ class TestAssistantCommands:
     @pytest.mark.asyncio
     async def test_create_with_name(self, assistant_commands):
         """Test assistant creation with name."""
-        result = await assistant_commands.create(
-            graph_id="test-graph",
-            name="My Assistant"
-        )
+        result = await assistant_commands.create(graph_id="test-graph", name="My Assistant")
         assert result is not None
         assert result["name"] == "My Assistant"
 
@@ -89,8 +85,7 @@ class TestAssistantCommands:
     async def test_create_with_config(self, assistant_commands):
         """Test assistant creation with config."""
         result = await assistant_commands.create(
-            graph_id="test-graph",
-            config={"model": "gpt-4", "temperature": 0.7}
+            graph_id="test-graph", config={"model": "gpt-4", "temperature": 0.7}
         )
         assert result is not None
 
@@ -98,18 +93,14 @@ class TestAssistantCommands:
     async def test_create_with_metadata(self, assistant_commands):
         """Test assistant creation with metadata."""
         result = await assistant_commands.create(
-            graph_id="test-graph",
-            metadata={"owner": "test-user", "environment": "dev"}
+            graph_id="test-graph", metadata={"owner": "test-user", "environment": "dev"}
         )
         assert result is not None
 
     @pytest.mark.asyncio
     async def test_create_with_if_exists(self, assistant_commands):
         """Test assistant creation with if_exists option."""
-        result = await assistant_commands.create(
-            graph_id="test-graph",
-            if_exists="return"
-        )
+        result = await assistant_commands.create(graph_id="test-graph", if_exists="return")
         assert result is not None
 
     @pytest.mark.asyncio
@@ -143,28 +134,21 @@ class TestAssistantCommands:
     @pytest.mark.asyncio
     async def test_patch_assistant(self, assistant_commands):
         """Test patching an assistant."""
-        result = await assistant_commands.patch(
-            assistant_id="assistant-001",
-            name="Updated Name"
-        )
+        result = await assistant_commands.patch(assistant_id="assistant-001", name="Updated Name")
         assert result is not None
         assert result["assistant_id"] == "assistant-001"
 
     @pytest.mark.asyncio
     async def test_patch_with_graph_id(self, assistant_commands):
         """Test patching assistant with new graph_id."""
-        result = await assistant_commands.patch(
-            assistant_id="assistant-001",
-            graph_id="new-graph"
-        )
+        result = await assistant_commands.patch(assistant_id="assistant-001", graph_id="new-graph")
         assert result is not None
 
     @pytest.mark.asyncio
     async def test_patch_with_config(self, assistant_commands):
         """Test patching assistant with new config."""
         result = await assistant_commands.patch(
-            assistant_id="assistant-001",
-            config={"model": "gpt-4-turbo"}
+            assistant_id="assistant-001", config={"model": "gpt-4-turbo"}
         )
         assert result is not None
 
@@ -172,8 +156,7 @@ class TestAssistantCommands:
     async def test_patch_with_metadata(self, assistant_commands):
         """Test patching assistant with new metadata."""
         result = await assistant_commands.patch(
-            assistant_id="assistant-001",
-            metadata={"version": "2.0"}
+            assistant_id="assistant-001", metadata={"version": "2.0"}
         )
         assert result is not None
 
@@ -202,6 +185,7 @@ class TestAssistantCommands:
     @pytest.mark.asyncio
     async def test_versions_nonexistent_assistant(self, assistant_commands, mock_client):
         """Test getting versions of non-existent assistant."""
+
         # Mock to raise exception
         async def raise_error(*args, **kwargs):
             raise Exception("Not found")
@@ -227,8 +211,13 @@ class TestAssistantCommandsReturnFormat:
         if result:
             assistant = result[0]
             expected_fields = {
-                "assistant_id", "graph_id", "name", "version",
-                "created_at", "updated_at", "metadata"
+                "assistant_id",
+                "graph_id",
+                "name",
+                "version",
+                "created_at",
+                "updated_at",
+                "metadata",
             }
             assert expected_fields.issubset(set(assistant.keys()))
 
@@ -237,8 +226,14 @@ class TestAssistantCommandsReturnFormat:
         """Test get returns expected fields."""
         result = await assistant_commands.get("assistant-001")
         expected_fields = {
-            "assistant_id", "graph_id", "name", "version",
-            "config", "metadata", "created_at", "updated_at"
+            "assistant_id",
+            "graph_id",
+            "name",
+            "version",
+            "config",
+            "metadata",
+            "created_at",
+            "updated_at",
         }
         assert expected_fields.issubset(set(result.keys()))
 
@@ -246,19 +241,12 @@ class TestAssistantCommandsReturnFormat:
     async def test_create_returns_expected_fields(self, assistant_commands):
         """Test create returns expected fields."""
         result = await assistant_commands.create(graph_id="test-graph")
-        expected_fields = {
-            "assistant_id", "graph_id", "name", "created_at"
-        }
+        expected_fields = {"assistant_id", "graph_id", "name", "created_at"}
         assert expected_fields.issubset(set(result.keys()))
 
     @pytest.mark.asyncio
     async def test_patch_returns_expected_fields(self, assistant_commands):
         """Test patch returns expected fields."""
-        result = await assistant_commands.patch(
-            assistant_id="assistant-001",
-            name="Updated"
-        )
-        expected_fields = {
-            "assistant_id", "graph_id", "name", "updated_at"
-        }
+        result = await assistant_commands.patch(assistant_id="assistant-001", name="Updated")
+        expected_fields = {"assistant_id", "graph_id", "name", "updated_at"}
         assert expected_fields.issubset(set(result.keys()))

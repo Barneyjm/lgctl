@@ -6,6 +6,7 @@ Each thread has a unique ID and accumulated state.
 """
 
 from typing import Any, Dict, List, Optional
+
 from ..client import LGCtlClient
 from ..formatters import Formatter
 
@@ -33,7 +34,7 @@ class ThreadCommands:
         limit: int = 20,
         offset: int = 0,
         metadata: Optional[Dict] = None,
-        status: Optional[str] = None
+        status: Optional[str] = None,
     ) -> List[Dict]:
         """
         List threads.
@@ -92,7 +93,7 @@ class ThreadCommands:
         self,
         thread_id: Optional[str] = None,
         metadata: Optional[Dict] = None,
-        if_exists: str = "raise"
+        if_exists: str = "raise",
     ) -> Dict:
         """
         Create a new thread.
@@ -138,10 +139,7 @@ class ThreadCommands:
         }
 
     async def state(
-        self,
-        thread_id: str,
-        checkpoint_id: Optional[str] = None,
-        subgraphs: bool = False
+        self, thread_id: str, checkpoint_id: Optional[str] = None, subgraphs: bool = False
     ) -> Optional[Dict]:
         """
         Get thread state.
@@ -178,7 +176,7 @@ class ThreadCommands:
         thread_id: str,
         values: Dict[str, Any],
         as_node: Optional[str] = None,
-        checkpoint_id: Optional[str] = None
+        checkpoint_id: Optional[str] = None,
     ) -> Dict:
         """
         Update thread state.
@@ -210,7 +208,7 @@ class ThreadCommands:
         thread_id: str,
         limit: int = 10,
         before: Optional[str] = None,
-        checkpoint_id: Optional[str] = None
+        checkpoint_id: Optional[str] = None,
     ) -> List[Dict]:
         """
         Get thread state history.
@@ -245,7 +243,7 @@ class ThreadCommands:
         self,
         src_thread_id: str,
         dst_thread_id: Optional[str] = None,
-        checkpoint_id: Optional[str] = None
+        checkpoint_id: Optional[str] = None,
     ) -> Dict:
         """
         Copy thread state to a new thread.
@@ -277,11 +275,7 @@ class ThreadCommands:
             "to_thread": new_thread["thread_id"],
         }
 
-    async def patch(
-        self,
-        thread_id: str,
-        metadata: Optional[Dict] = None
-    ) -> Dict:
+    async def patch(self, thread_id: str, metadata: Optional[Dict] = None) -> Dict:
         """
         Update thread metadata.
 

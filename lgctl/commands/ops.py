@@ -9,10 +9,11 @@ Unix philosophy: compose simple commands into powerful pipelines.
 
 import json
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional
+
 from ..client import LGCtlClient
 from ..formatters import Formatter
-from .store import StoreCommands, parse_namespace, format_namespace
+from .store import StoreCommands, format_namespace, parse_namespace
 
 
 class MemoryOps:
@@ -38,11 +39,7 @@ class MemoryOps:
         self.fmt = formatter
         self.store = StoreCommands(client, formatter)
 
-    async def analyze(
-        self,
-        namespace: str = "",
-        detailed: bool = False
-    ) -> Dict:
+    async def analyze(self, namespace: str = "", detailed: bool = False) -> Dict:
         """
         Analyze memory usage and patterns.
 
@@ -57,9 +54,7 @@ class MemoryOps:
 
         # Get all namespaces
         response = await self.client.store.list_namespaces(
-            prefix=list(ns_tuple),
-            max_depth=10,
-            limit=1000
+            prefix=list(ns_tuple), max_depth=10, limit=1000
         )
         # Handle different response formats from the API
         if isinstance(response, dict):
@@ -84,8 +79,7 @@ class MemoryOps:
 
             # Count items
             results = await self.client.store.search_items(
-                tuple(ns) if isinstance(ns, list) else ns,
-                limit=10000
+                tuple(ns) if isinstance(ns, list) else ns, limit=10000
             )
             items = results.get("items", [])
             ns_info["item_count"] = len(items)
@@ -111,8 +105,7 @@ class MemoryOps:
         # Summary
         if report["namespaces"]:
             report["largest_namespace"] = max(
-                report["namespaces"],
-                key=lambda x: x.get("item_count", 0)
+                report["namespaces"], key=lambda x: x.get("item_count", 0)
             )["namespace"]
 
         return report
@@ -123,7 +116,7 @@ class MemoryOps:
         before: Optional[str] = None,
         days_old: Optional[int] = None,
         dry_run: bool = True,
-        filter_fn: Optional[Callable[[Dict], bool]] = None
+        filter_fn: Optional[Callable[[Dict], bool]] = None,
     ) -> Dict:
         """
         Remove old or unused memories.
@@ -145,10 +138,7 @@ class MemoryOps:
             cutoff = datetime.now() - timedelta(days=days_old)
             before = cutoff.isoformat()
 
-        results = await self.client.store.search_items(
-            ns_tuple,
-            limit=10000
-        )
+        results = await self.client.store.search_items(ns_tuple, limit=10000)
         items = results.get("items", [])
 
         to_delete = []
@@ -181,8 +171,7 @@ class MemoryOps:
             for item in to_delete:
                 try:
                     await self.client.store.delete_item(
-                        tuple(item.get("namespace", [])),
-                        item.get("key")
+                        tuple(item.get("namespace", [])), item.get("key")
                     )
                     deleted += 1
                 except Exception:
@@ -197,7 +186,7 @@ class MemoryOps:
         output_file: Optional[str] = None,
         format: str = "jsonl",
         key_pattern: Optional[str] = None,
-        value_contains: Optional[str] = None
+        value_contains: Optional[str] = None,
     ) -> Dict:
         """
         Export memories to a file.
@@ -214,10 +203,7 @@ class MemoryOps:
         """
         ns_tuple = parse_namespace(namespace)
 
-        results = await self.client.store.search_items(
-            ns_tuple,
-            limit=100000
-        )
+        results = await self.client.store.search_items(ns_tuple, limit=100000)
         items = results.get("items", [])
 
         export_data = []
@@ -235,13 +221,15 @@ class MemoryOps:
                     skipped += 1
                     continue
 
-            export_data.append({
-                "namespace": item.get("namespace"),
-                "key": item.get("key"),
-                "value": item.get("value"),
-                "created_at": item.get("created_at"),
-                "updated_at": item.get("updated_at"),
-            })
+            export_data.append(
+                {
+                    "namespace": item.get("namespace"),
+                    "key": item.get("key"),
+                    "value": item.get("value"),
+                    "created_at": item.get("created_at"),
+                    "updated_at": item.get("updated_at"),
+                }
+            )
 
         if output_file:
             with open(output_file, "w") as f:
@@ -274,7 +262,7 @@ class MemoryOps:
         input_file: str,
         namespace_prefix: str = "",
         dry_run: bool = True,
-        overwrite: bool = False
+        overwrite: bool = False,
     ) -> Dict:
         """
         Import memories from a file.
@@ -339,7 +327,7 @@ class MemoryOps:
 
                     await self.client.store.put_item(ns, key, value)
                     report["imported"] += 1
-                except Exception as e:
+                except Exception:
                     report["errors"] += 1
             else:
                 report["imported"] += 1
@@ -347,10 +335,7 @@ class MemoryOps:
         return report
 
     async def dedupe(
-        self,
-        namespace: str,
-        key_fn: Optional[Callable[[Dict], str]] = None,
-        dry_run: bool = True
+        self, namespace: str, key_fn: Optional[Callable[[Dict], str]] = None, dry_run: bool = True
     ) -> Dict:
         """
         Find and remove duplicate entries.
@@ -365,10 +350,7 @@ class MemoryOps:
         """
         ns_tuple = parse_namespace(namespace)
 
-        results = await self.client.store.search_items(
-            ns_tuple,
-            limit=10000
-        )
+        results = await self.client.store.search_items(ns_tuple, limit=10000)
         items = results.get("items", [])
 
         # Group by dedup key
@@ -401,8 +383,7 @@ class MemoryOps:
             for item in duplicates:
                 try:
                     await self.client.store.delete_item(
-                        tuple(item.get("namespace", [])),
-                        item.get("key")
+                        tuple(item.get("namespace", [])), item.get("key")
                     )
                     deleted += 1
                 except Exception:
@@ -411,11 +392,7 @@ class MemoryOps:
 
         return report
 
-    async def search_all(
-        self,
-        query: str,
-        limit: int = 50
-    ) -> List[Dict]:
+    async def search_all(self, query: str, limit: int = 50) -> List[Dict]:
         """
         Deep search across all namespaces.
 
@@ -427,11 +404,7 @@ class MemoryOps:
             All matching items
         """
         # Get all namespaces
-        response = await self.client.store.list_namespaces(
-            prefix=[],
-            max_depth=10,
-            limit=1000
-        )
+        response = await self.client.store.list_namespaces(prefix=[], max_depth=10, limit=1000)
         # Handle different response formats from the API
         if isinstance(response, dict):
             namespaces = response.get("namespaces", [])
@@ -443,24 +416,22 @@ class MemoryOps:
         for ns in namespaces:
             ns_tuple = tuple(ns) if isinstance(ns, list) else ns
             try:
-                results = await self.client.store.search_items(
-                    ns_tuple,
-                    query=query,
-                    limit=limit
-                )
+                results = await self.client.store.search_items(ns_tuple, query=query, limit=limit)
                 for item in results.get("items", []):
-                    all_results.append({
-                        "namespace": format_namespace(item.get("namespace", [])),
-                        "key": item.get("key"),
-                        "value": item.get("value"),
-                        "score": item.get("score"),
-                    })
+                    all_results.append(
+                        {
+                            "namespace": format_namespace(item.get("namespace", [])),
+                            "key": item.get("key"),
+                            "value": item.get("value"),
+                            "score": item.get("score"),
+                        }
+                    )
             except Exception:
                 pass
 
         # Sort by score if available (handle None scores)
         all_results.sort(key=lambda x: x.get("score") or 0, reverse=True)
-        return all_results[:limit * 2]
+        return all_results[: limit * 2]
 
     async def stats(self) -> Dict:
         """
@@ -469,11 +440,7 @@ class MemoryOps:
         Returns:
             Statistics summary
         """
-        response = await self.client.store.list_namespaces(
-            prefix=[],
-            max_depth=10,
-            limit=1000
-        )
+        response = await self.client.store.list_namespaces(prefix=[], max_depth=10, limit=1000)
         # Handle different response formats from the API
         if isinstance(response, dict):
             namespaces = response.get("namespaces", [])
@@ -486,16 +453,10 @@ class MemoryOps:
         for ns in namespaces:
             ns_tuple = tuple(ns) if isinstance(ns, list) else ns
             try:
-                results = await self.client.store.search_items(
-                    ns_tuple,
-                    limit=10000
-                )
+                results = await self.client.store.search_items(ns_tuple, limit=10000)
                 items = results.get("items", [])
                 total_items += len(items)
-                total_size += sum(
-                    len(json.dumps(i.get("value", {})))
-                    for i in items
-                )
+                total_size += sum(len(json.dumps(i.get("value", {}))) for i in items)
             except Exception:
                 pass
 
@@ -512,7 +473,7 @@ class MemoryOps:
         namespace: str = "",
         key_pattern: Optional[str] = None,
         value_contains: Optional[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[Dict]:
         """
         Find memories matching criteria.
@@ -528,10 +489,7 @@ class MemoryOps:
         """
         ns_tuple = parse_namespace(namespace)
 
-        results = await self.client.store.search_items(
-            ns_tuple,
-            limit=10000
-        )
+        results = await self.client.store.search_items(ns_tuple, limit=10000)
         items = results.get("items", [])
 
         matches = []
@@ -544,23 +502,20 @@ class MemoryOps:
                 if value_contains.lower() not in value_str.lower():
                     continue
 
-            matches.append({
-                "namespace": format_namespace(item.get("namespace", [])),
-                "key": item.get("key"),
-                "value": item.get("value"),
-            })
+            matches.append(
+                {
+                    "namespace": format_namespace(item.get("namespace", [])),
+                    "key": item.get("key"),
+                    "value": item.get("value"),
+                }
+            )
 
             if len(matches) >= limit:
                 break
 
         return matches
 
-    async def grep(
-        self,
-        pattern: str,
-        namespace: str = "",
-        limit: int = 100
-    ) -> List[Dict]:
+    async def grep(self, pattern: str, namespace: str = "", limit: int = 100) -> List[Dict]:
         """
         Search memory values with a text pattern.
 
@@ -578,10 +533,7 @@ class MemoryOps:
 
         # Get all items
         if namespace:
-            results = await self.client.store.search_items(
-                ns_tuple,
-                limit=10000
-            )
+            results = await self.client.store.search_items(ns_tuple, limit=10000)
             items = results.get("items", [])
         else:
             items = await self.search_all("", limit=10000)
@@ -604,19 +556,27 @@ class MemoryOps:
                     end = min(len(value_str), match.end() + 50)
                     context = value_str[start:end]
 
-                    matches.append({
-                        "namespace": item.get("namespace") if isinstance(item.get("namespace"), str) else format_namespace(item.get("namespace", [])),
-                        "key": item.get("key"),
-                        "match": match.group(),
-                        "context": f"...{context}...",
-                    })
+                    matches.append(
+                        {
+                            "namespace": item.get("namespace")
+                            if isinstance(item.get("namespace"), str)
+                            else format_namespace(item.get("namespace", [])),
+                            "key": item.get("key"),
+                            "match": match.group(),
+                            "context": f"...{context}...",
+                        }
+                    )
             else:
                 if pattern.lower() in value_str.lower():
-                    matches.append({
-                        "namespace": item.get("namespace") if isinstance(item.get("namespace"), str) else format_namespace(item.get("namespace", [])),
-                        "key": item.get("key"),
-                        "context": value_str[:200],
-                    })
+                    matches.append(
+                        {
+                            "namespace": item.get("namespace")
+                            if isinstance(item.get("namespace"), str)
+                            else format_namespace(item.get("namespace", [])),
+                            "key": item.get("key"),
+                            "context": value_str[:200],
+                        }
+                    )
 
             if len(matches) >= limit:
                 break
