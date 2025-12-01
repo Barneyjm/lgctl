@@ -583,7 +583,9 @@ async def run_command(args: argparse.Namespace) -> int:
                         print(f"    After:  {sample['after']}")
 
             else:
-                print("Usage: lgctl ops <analyze|stats|export|import|prune|dedupe|find|grep|fix-values>")
+                print(
+                    "Usage: lgctl ops <analyze|stats|export|import|prune|dedupe|find|grep|fix-values>"
+                )
                 return 1
 
         elif args.command == "repl":

@@ -372,16 +372,20 @@ class MemoryOps:
                 if len(batch) >= batch_size:
                     await process_batch(batch)
                     if progress_callback:
-                        progress_callback(report["imported"] + report["skipped"] + report["errors"],
-                                         report["total_items"])
+                        progress_callback(
+                            report["imported"] + report["skipped"] + report["errors"],
+                            report["total_items"],
+                        )
                     batch = []
 
             # Process remaining items
             if batch:
                 await process_batch(batch)
                 if progress_callback:
-                    progress_callback(report["imported"] + report["skipped"] + report["errors"],
-                                     report["total_items"])
+                    progress_callback(
+                        report["imported"] + report["skipped"] + report["errors"],
+                        report["total_items"],
+                    )
         finally:
             if not stdin and source:
                 source.close()
@@ -596,9 +600,7 @@ class MemoryOps:
         if namespace:
             namespaces_to_check = [ns_tuple]
         else:
-            response = await self.client.store.list_namespaces(
-                prefix=[], max_depth=10, limit=1000
-            )
+            response = await self.client.store.list_namespaces(prefix=[], max_depth=10, limit=1000)
             if isinstance(response, dict):
                 namespaces_to_check = [tuple(ns) for ns in response.get("namespaces", [])]
             else:
@@ -648,12 +650,14 @@ class MemoryOps:
 
                         # Add sample for first few
                         if len(report["samples"]) < 5:
-                            report["samples"].append({
-                                "namespace": format_namespace(item.get("namespace", [])),
-                                "key": item.get("key"),
-                                "before": str(value)[:100] + "...",
-                                "after": str(fixed_value)[:100] + "...",
-                            })
+                            report["samples"].append(
+                                {
+                                    "namespace": format_namespace(item.get("namespace", [])),
+                                    "key": item.get("key"),
+                                    "before": str(value)[:100] + "...",
+                                    "after": str(fixed_value)[:100] + "...",
+                                }
+                            )
 
                         if not dry_run:
                             try:
