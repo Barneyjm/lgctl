@@ -21,13 +21,10 @@ A Unix-style command-line tool for managing LangGraph memory stores, threads, ru
 
 ```bash
 # From the package directory
-pip install -e .
+pip install lgctl
 
 # With MCP server support
-pip install -e ".[mcp]"
-
-# Or install dependencies only
-pip install langgraph-sdk python-dotenv
+pip install -e "lgctl[mcp]"
 ```
 
 ## Quick Start

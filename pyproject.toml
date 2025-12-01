@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lgctl"
-version = "0.1.1"
+version = "0.1.2"
 description = "LangGraph Control CLI - Unix-style tools for managing LangGraph stores, threads, and agents"
 readme = "README.md"
 license = "MIT"

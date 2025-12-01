@@ -118,6 +118,7 @@ lgctl repl
 - MCP tests auto-skip if `mcp` package not installed
 - Async tests use `pytest-asyncio` with auto mode
 - Run `uv pip install -e ".[dev,mcp]"` for full test suite
+- Always add new tests for new or improved functionality
 
 ## Code Style
 

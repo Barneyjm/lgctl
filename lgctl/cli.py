@@ -241,10 +241,14 @@ Examples:
 
     # ops import
     import_parser = ops_sub.add_parser("import", help="Import memories")
-    import_parser.add_argument("input_file", help="Input file")
+    import_parser.add_argument("input_file", nargs="?", help="Input file (omit for stdin)")
     import_parser.add_argument("--prefix", default="", help="Namespace prefix")
     import_parser.add_argument("--dry-run", action="store_true", help="Show what would be imported")
     import_parser.add_argument("--overwrite", action="store_true", help="Overwrite existing")
+    import_parser.add_argument("--stdin", action="store_true", help="Read from stdin")
+    import_parser.add_argument(
+        "--batch-size", type=int, default=100, help="Batch size for processing (default: 100)"
+    )
 
     # ops prune
     prune_parser = ops_sub.add_parser("prune", help="Prune old memories")
@@ -274,6 +278,16 @@ Examples:
     grep_parser.add_argument("pattern", help="Search pattern")
     grep_parser.add_argument("namespace", nargs="?", default="", help="Namespace")
     grep_parser.add_argument("-n", "--limit", type=int, default=100)
+
+    # ops fix-values
+    fix_parser = ops_sub.add_parser(
+        "fix-values", help="Fix malformed values with double-escaped JSON"
+    )
+    fix_parser.add_argument("namespace", nargs="?", default="", help="Namespace (empty for all)")
+    fix_parser.add_argument(
+        "--dry-run", action="store_true", default=True, help="Show what would be fixed"
+    )
+    fix_parser.add_argument("--force", action="store_true", help="Actually fix the values")
 
     # REPL command
     subparsers.add_parser("repl", help="Interactive REPL mode")
@@ -503,11 +517,27 @@ async def run_command(args: argparse.Namespace) -> int:
                     print(result.get("data", ""))
 
             elif args.subcommand == "import":
+                use_stdin = args.stdin or not args.input_file
+                if not use_stdin and not args.input_file:
+                    formatter.print_error("Either provide input_file or use --stdin")
+                    return 1
+
+                # Progress callback for large imports
+                last_report = [0]
+
+                def progress(processed: int, total: int) -> None:
+                    if total >= 10000 and processed - last_report[0] >= 10000:
+                        print(f"  Processed {processed:,} / {total:,} items...", file=sys.stderr)
+                        last_report[0] = processed
+
                 result = await ops.import_(
                     input_file=args.input_file,
                     namespace_prefix=args.prefix,
-                    dry_run=not args.overwrite and args.dry_run,
+                    dry_run=args.dry_run,
                     overwrite=args.overwrite,
+                    batch_size=args.batch_size,
+                    stdin=use_stdin,
+                    progress_callback=progress if not args.quiet else None,
                 )
                 formatter.print_item(result)
 
@@ -539,8 +569,21 @@ async def run_command(args: argparse.Namespace) -> int:
                 )
                 formatter.print_list(result)
 
+            elif args.subcommand == "fix-values":
+                result = await ops.fix_values(
+                    namespace=args.namespace,
+                    dry_run=not args.force,
+                )
+                formatter.print_item(result)
+                if result.get("samples"):
+                    print("\nSample fixes:")
+                    for sample in result["samples"]:
+                        print(f"  {sample['namespace']}/{sample['key']}")
+                        print(f"    Before: {sample['before']}")
+                        print(f"    After:  {sample['after']}")
+
             else:
-                print("Usage: lgctl ops <analyze|stats|export|import|prune|dedupe|find|grep>")
+                print("Usage: lgctl ops <analyze|stats|export|import|prune|dedupe|find|grep|fix-values>")
                 return 1
 
         elif args.command == "repl":

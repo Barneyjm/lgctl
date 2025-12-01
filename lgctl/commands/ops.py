@@ -9,7 +9,7 @@ Unix philosophy: compose simple commands into powerful pipelines.
 
 import json
 from datetime import datetime, timedelta
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, Iterator, List, Optional
 
 from ..client import LGCtlClient
 from ..formatters import Formatter
@@ -259,50 +259,46 @@ class MemoryOps:
 
     async def import_(
         self,
-        input_file: str,
+        input_file: Optional[str] = None,
         namespace_prefix: str = "",
         dry_run: bool = True,
         overwrite: bool = False,
+        batch_size: int = 100,
+        stdin: bool = False,
+        progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Dict:
         """
-        Import memories from a file.
+        Import memories from a file or stdin.
+
+        Optimized for importing millions of records with batching.
 
         Args:
-            input_file: Input file path
+            input_file: Input file path (None if using stdin)
             namespace_prefix: Prefix to add to all namespaces
             dry_run: If True, show what would be imported
-            overwrite: If True, overwrite existing items
+            overwrite: If True, overwrite existing items (skips existence check)
+            batch_size: Number of items to process per batch
+            stdin: Read from stdin instead of file
+            progress_callback: Optional callback(processed, total) for progress
 
         Returns:
             Import summary
         """
+        import sys
+
         prefix_tuple = parse_namespace(namespace_prefix)
 
-        # Read file
-        items = []
-        with open(input_file, "r") as f:
-            first_char = f.read(1)
-            f.seek(0)
-
-            if first_char == "[":
-                # JSON array
-                items = json.load(f)
-            else:
-                # JSONL
-                for line in f:
-                    if line.strip():
-                        items.append(json.loads(line))
-
         report = {
-            "file": input_file,
-            "total_items": len(items),
+            "file": input_file or "(stdin)",
+            "total_items": 0,
             "dry_run": dry_run,
             "imported": 0,
             "skipped": 0,
             "errors": 0,
         }
 
-        for item in items:
+        async def process_item(item: Dict) -> str:
+            """Process a single item, returns status: 'imported', 'skipped', or 'error'."""
             ns = item.get("namespace", [])
             if isinstance(ns, str):
                 ns = parse_namespace(ns)
@@ -316,21 +312,79 @@ class MemoryOps:
             key = item.get("key")
             value = item.get("value")
 
-            if not dry_run:
-                try:
-                    # Check if exists
-                    if not overwrite:
-                        existing = await self.client.store.get_item(ns, key)
-                        if existing:
-                            report["skipped"] += 1
-                            continue
+            if dry_run:
+                return "imported"
 
-                    await self.client.store.put_item(ns, key, value)
+            try:
+                # Skip existence check if overwriting (much faster for bulk imports)
+                if not overwrite:
+                    existing = await self.client.store.get_item(ns, key)
+                    if existing:
+                        return "skipped"
+
+                await self.client.store.put_item(ns, key, value)
+                return "imported"
+            except Exception:
+                return "error"
+
+        async def process_batch(batch: List[Dict]) -> None:
+            """Process a batch of items."""
+            for item in batch:
+                status = await process_item(item)
+                if status == "imported":
                     report["imported"] += 1
-                except Exception:
+                elif status == "skipped":
+                    report["skipped"] += 1
+                else:
                     report["errors"] += 1
+
+        def iter_items(file_handle) -> Iterator[Dict]:
+            """Iterate over items from file handle (supports JSON array or JSONL)."""
+            first_char = file_handle.read(1)
+            if not first_char:
+                return
+
+            if first_char == "[":
+                # JSON array - read all at once
+                file_handle.seek(0)
+                items = json.load(file_handle)
+                yield from items
             else:
-                report["imported"] += 1
+                # JSONL - stream line by line
+                file_handle.seek(0)
+                for line in file_handle:
+                    line = line.strip()
+                    if line:
+                        yield json.loads(line)
+
+        # Process from stdin or file
+        if stdin:
+            source = sys.stdin
+        else:
+            source = open(input_file, "r")
+
+        try:
+            batch = []
+            for item in iter_items(source):
+                report["total_items"] += 1
+                batch.append(item)
+
+                if len(batch) >= batch_size:
+                    await process_batch(batch)
+                    if progress_callback:
+                        progress_callback(report["imported"] + report["skipped"] + report["errors"],
+                                         report["total_items"])
+                    batch = []
+
+            # Process remaining items
+            if batch:
+                await process_batch(batch)
+                if progress_callback:
+                    progress_callback(report["imported"] + report["skipped"] + report["errors"],
+                                     report["total_items"])
+        finally:
+            if not stdin and source:
+                source.close()
 
         return report
 
@@ -514,6 +568,110 @@ class MemoryOps:
                 break
 
         return matches
+
+    async def fix_values(
+        self,
+        namespace: str = "",
+        dry_run: bool = True,
+    ) -> Dict:
+        """
+        Fix malformed values that have double-escaped JSON.
+
+        Detects and fixes patterns like:
+            {"value": "{\"name\": \"...\"}"}  ->  {"name": "..."}
+
+        This commonly happens when JSON is stored as an escaped string
+        inside a wrapper object, breaking semantic search.
+
+        Args:
+            namespace: Namespace to fix (empty for all)
+            dry_run: If True, show what would be fixed without fixing
+
+        Returns:
+            Fix report with counts and sample fixes
+        """
+        ns_tuple = parse_namespace(namespace)
+
+        # Get all namespaces to process
+        if namespace:
+            namespaces_to_check = [ns_tuple]
+        else:
+            response = await self.client.store.list_namespaces(
+                prefix=[], max_depth=10, limit=1000
+            )
+            if isinstance(response, dict):
+                namespaces_to_check = [tuple(ns) for ns in response.get("namespaces", [])]
+            else:
+                namespaces_to_check = [tuple(ns) for ns in response]
+
+        report = {
+            "namespace": format_namespace(ns_tuple) if namespace else "(all)",
+            "total_items": 0,
+            "malformed": 0,
+            "fixed": 0,
+            "errors": 0,
+            "dry_run": dry_run,
+            "samples": [],
+        }
+
+        def is_escaped_json_value(value: dict) -> bool:
+            """Check if value is a wrapper around escaped JSON."""
+            if not isinstance(value, dict):
+                return False
+            # Check for {"value": "{...}"} pattern
+            if len(value) == 1 and "value" in value:
+                inner = value["value"]
+                if isinstance(inner, str) and inner.startswith("{") and inner.endswith("}"):
+                    try:
+                        json.loads(inner)
+                        return True
+                    except json.JSONDecodeError:
+                        return False
+            return False
+
+        def unwrap_value(value: dict) -> dict:
+            """Unwrap escaped JSON from wrapper."""
+            return json.loads(value["value"])
+
+        for ns in namespaces_to_check:
+            try:
+                results = await self.client.store.search_items(ns, limit=100000)
+                items = results.get("items", [])
+
+                for item in items:
+                    report["total_items"] += 1
+                    value = item.get("value", {})
+
+                    if is_escaped_json_value(value):
+                        report["malformed"] += 1
+                        fixed_value = unwrap_value(value)
+
+                        # Add sample for first few
+                        if len(report["samples"]) < 5:
+                            report["samples"].append({
+                                "namespace": format_namespace(item.get("namespace", [])),
+                                "key": item.get("key"),
+                                "before": str(value)[:100] + "...",
+                                "after": str(fixed_value)[:100] + "...",
+                            })
+
+                        if not dry_run:
+                            try:
+                                item_ns = item.get("namespace", [])
+                                if isinstance(item_ns, list):
+                                    item_ns = tuple(item_ns)
+                                await self.client.store.put_item(
+                                    item_ns,
+                                    item.get("key"),
+                                    fixed_value,
+                                )
+                                report["fixed"] += 1
+                            except Exception:
+                                report["errors"] += 1
+            except Exception:
+                pass
+
+        return report
 
     async def grep(self, pattern: str, namespace: str = "", limit: int = 100) -> List[Dict]:
         """
